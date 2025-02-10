@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Conect Four</h1>
+    <h2>Let's play Connect Four</h2>
+    <button class="play-with-friend">Play with friend</button>
+    <button class="play-with-computer">Play with Computer</button> 
+    <div id="game-container">
+        <div id="button-container">
+            <!-- 各列に対応するボタンを作成 -->
+            <button class="column-button" data-col="0">1</button>
+            <button class="column-button" data-col="1">2</button>
+            <button class="column-button" data-col="2">3</button>
+            <button class="column-button" data-col="3">4</button>
+            <button class="column-button" data-col="4">5</button>
+            <button class="column-button" data-col="5">6</button>
+            <button class="column-button" data-col="6">7</button>
+        </div>
+        <div id="board"></div> <!-- ここにボードが生成される -->
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

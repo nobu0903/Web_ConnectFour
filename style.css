@@ -1,0 +1,59 @@
+body {
+    background: #fff;
+    font: 400 12px/1.8 "Open Sans", sans-serif;
+    color: #666;
+    -webkit-font-smoothing: antialiased;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#button-container {
+    margin-bottom: 10px; /*ボタンのとボードの間に１０ｐｘの空間を入れる*/
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(7, 60px);
+    grid-template-rows: repeat(6, 60px);
+    gap: 5px;
+    background-color: blue;
+    padding: 10px;
+    border-radius: 10px;
+    width: fit-content;
+    margin: auto;
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    background-color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+/*駒の色の設定*/
+.red {
+    background-color: red;
+}
+
+.yellow {
+    background-color: yellow;
+}
+
+.column-button {
+    margin: 0 10px; /*ボタン間のスペース*/
+    padding: 10px 15px; /*ボタンの中のパディング作る*/
+    font-size: 16px;
+    cursor: pointer;/*マウスオーバーしたらカーソルがpointer(人差し指）になる*/
+}
+
+/*ボタンにマウスオーバーしたら色が赤に変わる*/
+.column-button:hover{
+    background-color: red;
+}
