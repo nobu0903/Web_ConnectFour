@@ -43,7 +43,11 @@ function dropPiece(col) {
     
     // コンピューターのターンを呼び出す
     if (currentPlayer === 'yellow' && (mode === 'play-with-idiot-computer')) {
-        computerTurn(); // コンピューターのターン
+        idiotComputerTurn(); // コンピューターのターン
+    }
+    //ここにminimax functionつくって適用する予定です。
+    if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer')) {
+        idiotComputerTurn(); // コンピューターのターン
     }
 }
 
@@ -60,7 +64,7 @@ function isColumnFull(col) {
     return cell && (cell.classList.contains('red') || cell.classList.contains('yellow'));
 }
 
-function computerTurn() {
+function idiotCmputerTurn() {
     const availableColumns = [];
 
     for(let col = 0; col < 7; col++) {
@@ -181,6 +185,3 @@ function checkWinner(row, col, lastPlayer) {
 
     return false; // 4つ並んでいない
 }
-
-
-
