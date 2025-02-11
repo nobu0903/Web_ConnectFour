@@ -45,7 +45,7 @@ function dropPiece(col) {
     if (currentPlayer === 'yellow' && (mode === 'play-with-idiot-computer')) {
         idiotComputerTurn(); // コンピューターのターン
     }
-    //ここにminimax functionつくって適用する予定です。
+    //後で変えるミニマックス作ったら適用する
     if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer')) {
         idiotComputerTurn(); // コンピューターのターン
     }
@@ -64,7 +64,7 @@ function isColumnFull(col) {
     return cell && (cell.classList.contains('red') || cell.classList.contains('yellow'));
 }
 
-function idiotCmputerTurn() {
+function idiotComputerTurn() {
     const availableColumns = [];
 
     for(let col = 0; col < 7; col++) {
