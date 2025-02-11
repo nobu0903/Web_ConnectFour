@@ -22,6 +22,10 @@ createBoard();
 function dropPiece(col) {
     for (let row = 5; row >= 0; row--) { // 下から上に向かって探す
         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        if (isColumnFull(col)) {
+            alert('Error: This column is already full. \nPlease choose other one');
+            return; // 列が埋まっている場合は処理を終了
+        }
         if (!cell.classList.contains('red') && !cell.classList.contains('yellow')) { // 空のセルを探す
             cell.classList.add(currentPlayer); // 現在のプレイヤーの色を追加
             const lastPlayer = currentPlayer; // 最後に置いたプレイヤーの色を保持
@@ -45,8 +49,14 @@ function dropPiece(col) {
 function resetBoard() {
     const board = document.getElementById('board');
     board.innerHTML = ''; // 盤面を空にする
-    createBoard();
+    createBoard();//createBoardを呼び出して盤面のを作り直す
     currentPlayer = 'red';
+}
+
+
+function isColumnFull(col) {
+    const cell = document.querySelector(`.cell[data-row="0"][data-col="${col}"]`);
+    return cell && (cell.classList.contains('red') || cell.classList.contains('yellow'));
 }
 
 function computerTurn() {
