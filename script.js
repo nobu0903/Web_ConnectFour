@@ -37,6 +37,7 @@ function dropPiece(col) {
             break;
         }
     }
+}
     
     // プレイヤーのターンを交代
     currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red';
@@ -47,9 +48,8 @@ function dropPiece(col) {
     }
     //今は仮でcomputerTurnにしてるけどminimax function 完成したらここに組み込む
     if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer')) {
-        computerTurn(); // コンピューターのターン
+        idiotComputerrTurn()
     }
-}
 
 function resetBoard() {
     const board = document.getElementById('board');
@@ -186,6 +186,4 @@ function checkWinner(row, col, lastPlayer) {
 
     return false; // 4つ並んでいない
 }
-
-
 
