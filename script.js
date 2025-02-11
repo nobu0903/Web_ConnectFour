@@ -43,6 +43,10 @@ function dropPiece(col) {
     
     // コンピューターのターンを呼び出す
     if (currentPlayer === 'yellow' && (mode === 'play-with-idiot-computer')) {
+        idiotComputerTurn(); // コンピューターのターン
+    }
+    //今は仮でcomputerTurnにしてるけどminimax function 完成したらここに組み込む
+    if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer')) {
         computerTurn(); // コンピューターのターン
     }
 }
@@ -60,7 +64,7 @@ function isColumnFull(col) {
     return cell && (cell.classList.contains('red') || cell.classList.contains('yellow'));
 }
 
-function computerTurn() {
+function idiotComputerrTurn() {
     const availableColumns = [];
 
     for(let col = 0; col < 7; col++) {
@@ -76,6 +80,7 @@ function computerTurn() {
     }
 }
  
+
 
 // ボタンにイベントリスナーを追加
 //play with computer と一緒だから変えないといけない
