@@ -1,6 +1,7 @@
 const board = document.getElementById("board");
 const dropButton = document.getElementById("dropButton");
 let currentPlayer = 'red'; // プレイヤーの色を管理
+let mode = 'play-with-friend';
 
 // 盤面を作る（7列 × 6行）
 function createBoard() {
@@ -41,7 +42,7 @@ function dropPiece(col) {
     currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red';
     
     // コンピューターのターンを呼び出す
-    if (currentPlayer === 'yellow') {
+    if (currentPlayer === 'yellow' && (mode === 'play-with-idiot-computer')) {
         computerTurn(); // コンピューターのターン
     }
 }
@@ -74,17 +75,26 @@ function computerTurn() {
         dropPiece(randomCol);
     }
 }
+ 
 
 // ボタンにイベントリスナーを追加
 //play with computer と一緒だから変えないといけない
 document.querySelector('.play-with-friend').addEventListener('click', () => {
     resetBoard(); // 盤面をリセット
     currentPlayer = 'red'; // プレイヤーをredに設定
+    mode = 'play-with-friend';
 });
 
-document.querySelector('.play-with-computer').addEventListener('click', () => {
+document.querySelector('.play-with-idiot-computer').addEventListener('click', () => {
     resetBoard(); // 盤面をリセット
     currentPlayer = 'red'; // プレイヤーをredに設定
+    mode = 'play-with-idiot-computer';
+});
+
+document.querySelector('.play-with-smart-computer').addEventListener('click', () => {
+    resetBoard(); // 盤面をリセット
+    currentPlayer = 'red'; // プレイヤーをredに設定
+    mode = 'play-with-smart-computer';
 });
 
 // 各列のボタンにクリックイベントを追加
