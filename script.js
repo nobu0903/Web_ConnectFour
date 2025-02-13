@@ -46,7 +46,8 @@ function dropPiece(col) {
         idiotComputerTurn(); // コンピューターのターン
     }
     //後で変えるミニマックス作ったら適用する
-    if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer')) {
+    //ifにしてたらidiot computer押してもsmart computer呼び出されてたけどelse ifにしたらidiot computer が適用された
+    else if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer')) {
         smartComputerTurn(); // コンピューターのターン
     }
 }
