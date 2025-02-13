@@ -29,11 +29,11 @@ function dropPiece(col) {
         }
         if (!cell.classList.contains('red') && !cell.classList.contains('yellow')) { // 空のセルを探す
             cell.classList.add(currentPlayer); // 現在のプレイヤーの色を追加
+            virtualBoard[row][col] = currentPlayer; // virtualBoardも更新
             const lastPlayer = currentPlayer; // 最後に置いたプレイヤーの色を保持
             if (checkWinner(row, col, lastPlayer)) { // 勝者の判定にlastPlayerを使用
                 alert(`${lastPlayer} win!!`); // 正しいプレイヤーの色を表示
             }
-            console.log(currentPlayer);
             break;
         }
     }
@@ -55,6 +55,8 @@ function resetBoard() {
     const board = document.getElementById('board');
     board.innerHTML = ''; // 盤面を空にする
     createBoard();//createBoardを呼び出して盤面のを作り直す
+    // virtualBoardもリセット
+    virtualBoard = Array.from({ length: 6 }, () => Array(7).fill(null));
     currentPlayer = 'red';
 }
 
@@ -95,7 +97,7 @@ function smartComputerTurn() {
     let bestScore = -Infinity;
 
     for (const col of availableColumns) {
-        const newNode = ;/* ゲームの新しい状態を作成 */
+        const newNode = createNewNode(virtualBoard, col, currentPlayer);/* ゲームの新しい状態を作成 */
         const score = minimax(newNode, 3, false, -Infinity, Infinity); // 深さ3で評価
         if (score > bestScore) {
             bestScore = score;
@@ -104,6 +106,23 @@ function smartComputerTurn() {
     }
 
     dropPiece(bestCol);
+}
+//virtualBoardの初期化: ゲーム開始時に、空の盤面をvirtualBoardとして初期化します。minimax functionに引数として使う
+let virtualBoard = Array.from({ length: 6 }, () => Array(7).fill(null));
+
+// 新しい状態を作成する関数
+function createNewNode(virtualBoard, col, player) {
+    const newNode = virtualBoard.map(row => row.slice()); // 現在の盤面をコピー
+
+    // 指定された列にピースを落とす
+    for (let row = newNode.length - 1; row >= 0; row--) {
+        if (!newNode[row][col]) { // 空のセルを見つけたら
+            newNode[row][col] = player; // 現在のプレイヤーのピースを配置
+            break; // ピースを配置したらループを終了
+        }
+    }
+
+    return newNode; // 新しい盤面を返す
 }
 
 //https://www.youtube.com/watch?v=l-hh51ncgDI ミニマックスアルゴリズムとアルファベータアルゴリズムについての動画
@@ -122,13 +141,14 @@ function minimax (node, depth, isMaximizingPlayer, alpha, beta) {
     }
     //最大化プレイヤーのチェック: 現在のプレイヤーが最大化を目指すプレイヤーかどうかを確認します。
     if (isMaximizingPlayer) {
-        let maxEval = -Infinity; //最大評価スコアを負の無限大で初期化します。これにより一番低い評価の数字が最小値となる
-        for (let col = 0; col < 7; col++) {//１行目から７行目まで評価していく
-            if (!isColumnFull(col)) {
-                const eval = minimax(newNode, depth - 1, false, alpha, beta) 
-                    maxEval = Math.max(maxEval, eval);
-                    alpha = Math.max(alpha, eval);//aalphaをその深さにおける最大値に更新
-                    if (beta <= alpha) break //beta cut             
+        let maxEval = -Infinity;
+        for (let col = 0; col < 7; col++) {
+            if (node[0][col] === null) { // isColumnFullの代わりに直接チェック
+                const newNode = createNewNode(node, col, 'yellow'); // nodeを使用
+                const eval = minimax(newNode, depth - 1, false, alpha, beta); // newNodeを渡す
+                maxEval = Math.max(maxEval, eval);
+                alpha = Math.max(alpha, eval);//aalphaをその深さにおける最大値に更新
+                if (beta <= alpha) break //beta cut             
             }
         }
         return maxEval;
@@ -136,7 +156,8 @@ function minimax (node, depth, isMaximizingPlayer, alpha, beta) {
     else {
         let minEval = Infinity;//最小評価スコアを正の無限大で初期化します。これにより一番高い評価の数字が最大値となる。
         for (let col = 0; col < 7; col++) {
-            if (!isColumnFull(col)) {
+            if (node[0][col] === null) {
+                const newNode = createNewNode(node, col, 'red');
                 const eval = minimax(newNode, depth - 1, true, alpha, beta);
                 minEval = Math.min(minEval, eval);
                 beta = Math.min(beta, eval);//betaをその深さにおける最小値に更新
@@ -147,15 +168,20 @@ function minimax (node, depth, isMaximizingPlayer, alpha, beta) {
     }
 }
 
+// ゲームの開始時に仮想の盤面を使用してミニマックスを呼び出す
+const bestScore = minimax(virtualBoard, 3, true, -Infinity, Infinity); // 例えば、深さ3で最大化プレイヤーのターン
+
 function isGameOver(node) {
     // 盤面の状態を取得
     for (let row = 0; row < 6; row++) {
         for (let col = 0; col < 7; col++) {
             const cell = node[row][col];
-            if (cell.classList.contains('red') || cell.classList.contains('yellow')) {
-                // 勝者のチェック
-                if (checkWinner(row, col, cell.classList.contains('red') ? 'red' : 'yellow')) {
-                    return true; // 勝者がいる場合
+            if (cell) { // cellがnullでないことを確認
+                if (cell === 'red' || cell === 'yellow') {
+                    // 勝者のチェック
+                    if (checkWinner(row, col, cell)) {
+                        return true; // 勝者がいる場合
+                    }
                 }
             }
         }
@@ -174,83 +200,80 @@ function isGameOver(node) {
 function evaluateBoard(node) {
     let score = 0;
 
-    // Check horizontal lines
+    // 横方向のチェック
     for (let row = 0; row < 6; row++) {
         for (let col = 0; col < 4; col++) {
             let compCount = 0;
             let playerCount = 0;
 
             for (let i = 0; i < 4; i++) {
-                const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
-                if (cell.classList.contains('yellow')) compCount++;
-                if (cell.classList.contains('red')) playerCount++;
+                if (node[row][col + i] === 'yellow') compCount++;
+                if (node[row][col + i] === 'red') playerCount++;
             }
             score += evaluateLine(compCount, playerCount);
         }
     }
 
-    // Check vertical lines
+    // 縦方向のチェック
     for (let col = 0; col < 7; col++) {
         for (let row = 0; row < 3; row++) {
             let compCount = 0;
             let playerCount = 0;
 
             for (let i = 0; i < 4; i++) {
-                const cell = document.querySelector(`.cell[data-row="${row + i}"][data-col="${col}"]`);
-                if (cell.classList.contains('yellow')) compCount++;
-                if (cell.classList.contains('red')) playerCount++;
+                if (node[row + i][col] === 'yellow') compCount++;
+                if (node[row + i][col] === 'red') playerCount++;
             }
             score += evaluateLine(compCount, playerCount);
         }
     }
 
-    // Check diagonal lines (\ direction)
+    // 斜め方向のチェック（右下がり）
     for (let row = 0; row < 3; row++) {
         for (let col = 0; col < 4; col++) {
             let compCount = 0;
             let playerCount = 0;
 
             for (let i = 0; i < 4; i++) {
-                const cell = document.querySelector(`.cell[data-row="${row + i}"][data-col="${col + i}"]`);
-                if (cell.classList.contains('yellow')) compCount++;
-                if (cell.classList.contains('red')) playerCount++;
+                if (node[row + i][col + i] === 'yellow') compCount++;
+                if (node[row + i][col + i] === 'red') playerCount++;
             }
             score += evaluateLine(compCount, playerCount);
         }
     }
 
-    // Check diagonal lines (/ direction)
-    for (let row = 3; row < 6; row++) {
-        for (let col = 0; col < 4; col++) {
+    // 斜め方向のチェック（左下がり）
+    for (let row = 0; row < 3; row++) {
+        for (let col = 3; col < 7; col++) {
             let compCount = 0;
             let playerCount = 0;
 
             for (let i = 0; i < 4; i++) {
-                const cell = document.querySelector(`.cell[data-row="${row - i}"][data-col="${col + i}"]`);
-                if (cell.classList.contains('yellow')) compCount++;
-                if (cell.classList.contains('red')) playerCount++;
+                if (node[row + i][col - i] === 'yellow') compCount++;
+                if (node[row + i][col - i] === 'red') playerCount++;
             }
             score += evaluateLine(compCount, playerCount);
         }
     }
 
-    return score; // Return the calculated score
+    console.log(score); // まず記録
+    return score; // その後リターン
 }
 
 
 // 評価スコアを返す補助関数
 function evaluateLine(compCount, playerCount) {
-    if (compCount > 0 && playerCount > 0) return 0; // 両方のコマがある場合は無効
-    if (compCount === 3) return 50;
-    if (compCount === 2) return 10;
-    if (playerCount === 3) return -50;
-    if (playerCount === 2) return -10;
-    return 0;
+    if (compCount > 0 && playerCount > 0) return 0;
+    if (compCount === 4) return 1000; // 勝利状態
+    if (compCount === 3) return 100;  // より大きな重み
+    if (compCount === 2) return 20;   // より大きな重み
+    if (playerCount === 4) return -1000;
+    if (playerCount === 3) return -100;
+    if (playerCount === 2) return -20;
+    return compCount - playerCount; // 1個の駒も評価
 }
 
-function minimax (depth, alpha, beta, maximizingPlayer) {
-    let winner = checkWinner(row, col, lastPlayer)
-}
+
 
 // ボタンにイベントリスナーを追加
 //play with computer と一緒だから変えないといけない
@@ -288,7 +311,6 @@ function checkWinner(row, col, lastPlayer) {
     }
 
     const currentColor = lastPlayer; // 最後に置いたプレイヤーの色を取得
-    console.log(`Checking winner for row: ${row}, col: ${col}, currentColor: ${currentColor}`); // デバッグ用ログ
 
     // 横方向のチェック
     for (let c = Math.max(0, col - 3); c <= Math.min(5, col + 3); c++) {
