@@ -347,10 +347,11 @@ function checkWinner(row, col, lastPlayer) {
 
     // 斜め方向のチェック（右下がり）
     for (let d = -3; d <= 0; d++) {
-        const cell1 = document.querySelector(`.cell[data-row="${row + d}"][data-col="${col + d}"]`);
-        const cell2 = document.querySelector(`.cell[data-row="${row + d + 1}"][data-col="${col + d + 1}"]`);
-        const cell3 = document.querySelector(`.cell[data-row="${row + d + 2}"][data-col="${col + d + 2}"]`);
-        const cell4 = document.querySelector(`.cell[data-row="${row + d + 3}"][data-col="${col + d + 3}"]`);
+        const cell1 = document.querySelector(`.cell[data-row="${row - d}"][data-col="${col - d}"]`);//dがマイナスだからマイナスのマイナスでdata-rowはプラスになる。
+        const cell2 = document.querySelector(`.cell[data-row="${row - d - 1}"][data-col="${col - d - 1}"]`);
+        const cell3 = document.querySelector(`.cell[data-row="${row - d - 2}"][data-col="${col - d - 2}"]`);
+        const cell4 = document.querySelector(`.cell[data-row="${row - d - 3}"][data-col="${col - d - 3}"]`);
+        console.log("右下がりの勝者チェック開始")
 
         if (cell1 && cell2 && cell3 && cell4 && 
             cell1.classList.contains(currentColor) &&
@@ -377,5 +378,6 @@ function checkWinner(row, col, lastPlayer) {
         }
     }
 
+    
     return false; // 4つ並んでいない
 }
