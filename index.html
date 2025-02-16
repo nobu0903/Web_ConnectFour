@@ -24,11 +24,20 @@
             </ul>
         </nav>
     </header>
-    <h1>Conect Four</h1>
+    <div id="mode-selection" class="mode-selection">
+        <div class="mode-selection-content">
+            <h2>ゲームモードを選択してください</h2>
+            <div class="mode-buttons">
+                <button id="pvp-mode">プレイヤー vs プレイヤー</button>
+                <button id="pvc-mode">プレイヤー vs コンピュータ</button>
+            </div>
+        </div>
+    </div>
     <h2>Let's play Connect Four</h2>
     <button class="play-with-friend">Play with friend</button>
     <button class="play-with-idiot-computer">Play with Level1 Computer</button> 
     <button class="play-with-smart-computer">Play with level2 Computer</button> 
+    
     <div id="game-container">
         <div id="button-container">
             <!-- 各列に対応するボタンを作成 -->
@@ -45,12 +54,6 @@
     <script src="script.js"></script>
 
     <footer>
-        <div class="waves">
-          <div class="wave" id="wave1"></div>
-          <div class="wave" id="wave2"></div>
-          <div class="wave" id="wave3"></div>
-          <div class="wave" id="wave4"></div>
-        </div>
         <ul class="social_icon">
           <li><a href="#"><ion-icon name="logo-facebook"></ion-icon></a></li>
           <li><a href="#"><ion-icon name="logo-twitter"></ion-icon></a></li>
@@ -65,11 +68,9 @@
           <li><a href="#">Team</a></li>
           <li><a href="#">Contact</a></li>
         </ul>
-        <p class="copyright"> Made with ❤️ in London.</p>
+        <p class="copyright"> Made with ❤️ in Budapest.</p>
       </footer>
       <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
       <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-      
-      </body>
 </body>
 </html>

@@ -1,8 +1,10 @@
+//main.js
 const board = document.getElementById("board");
 const dropButton = document.getElementById("dropButton");
 let currentPlayer = 'red'; // プレイヤーの色を管理
 let mode = 'play-with-friend';
 
+//board.js
 // 盤面を作る（7列 × 6行）
 function createBoard() {
     for (let row = 0; row < 6; row++) {
@@ -16,9 +18,10 @@ function createBoard() {
     }
 }
 
+//main.js Do export from board.js
 createBoard();
 
-
+//gameLogic.js
 // 駒を落とす関数
 function dropPiece(col) {
     for (let row = 5; row >= 0; row--) { // 下から上に向かって探す
@@ -52,6 +55,7 @@ function dropPiece(col) {
     }
 }
 
+//board.js
 function resetBoard() {
     const board = document.getElementById('board');
     board.innerHTML = ''; // 盤面を空にする
@@ -61,12 +65,13 @@ function resetBoard() {
     currentPlayer = 'red';
 }
 
-
+//board.js
 function isColumnFull(col) {
     const cell = document.querySelector(`.cell[data-row="0"][data-col="${col}"]`);
     return cell && (cell.classList.contains('red') || cell.classList.contains('yellow'));
 }
 
+//いらない削除
 function idiotComputerTurn() {
     const availableColumns = [];
 
@@ -83,6 +88,7 @@ function idiotComputerTurn() {
     }
 }
 
+//computer.js
 function smartComputerTurn() {
     const availableColumns = [];
 
@@ -108,9 +114,13 @@ function smartComputerTurn() {
 
     dropPiece(bestCol);
 }
+
+//main.js
 //virtualBoardの初期化: ゲーム開始時に、空の盤面をvirtualBoardとして初期化します。minimax functionに引数として使う
 let virtualBoard = Array.from({ length: 6 }, () => Array(7).fill(null));
 
+
+//.computer.js
 // 新しい状態を作成する関数
 function createNewNode(virtualBoard, col, player) {
     const newNode = virtualBoard.map(row => row.slice()); // 現在の盤面をコピー
@@ -126,6 +136,7 @@ function createNewNode(virtualBoard, col, player) {
     return newNode; // 新しい盤面を返す
 }
 
+//computer.js
 //https://www.youtube.com/watch?v=l-hh51ncgDI ミニマックスアルゴリズムとアルファベータアルゴリズムについての動画
 // アルファ（α）
 // 定義: αは、最大化プレイヤーが現在のノードで得られる最良のスコアの下限を示します。
@@ -169,9 +180,11 @@ function minimax (node, depth, isMaximizingPlayer, alpha, beta) {
     }
 }
 
+//main.js
 // ゲームの開始時に仮想の盤面を使用してミニマックスを呼び出す
 const bestScore = minimax(virtualBoard, 3, true, -Infinity, Infinity); // 例えば、深さ3で最大化プレイヤーのターン
 
+//computer.js minimax function でしか使ってないからcomputer.jsに移動gameLogic.jsではない
 function isGameOver(node) {
     // 盤面の状態を取得
     for (let row = 0; row < 6; row++) {
@@ -198,6 +211,7 @@ function isGameOver(node) {
     return true; // 盤面が満杯の場合
 }
 
+//computer.js
 function evaluateBoard(node) {
     let score = 0;
 
@@ -261,7 +275,7 @@ function evaluateBoard(node) {
     return score; // その後リターン
 }
 
-
+//computer.js
 // 評価スコアを返す補助関数
 function evaluateLine(compCount, playerCount) {
     if (compCount > 0 && playerCount > 0) return 0;
@@ -275,7 +289,7 @@ function evaluateLine(compCount, playerCount) {
 }
 
 
-
+//main.js
 // ボタンにイベントリスナーを追加
 //play with computer と一緒だから変えないといけない
 document.querySelector('.play-with-friend').addEventListener('click', () => {
@@ -284,18 +298,21 @@ document.querySelector('.play-with-friend').addEventListener('click', () => {
     mode = 'play-with-friend';
 });
 
+//main.js
 document.querySelector('.play-with-idiot-computer').addEventListener('click', () => {
     resetBoard(); // 盤面をリセット
     currentPlayer = 'red'; // プレイヤーをredに設定
     mode = 'play-with-idiot-computer';
 });
 
+//main.js
 document.querySelector('.play-with-smart-computer').addEventListener('click', () => {
     resetBoard(); // 盤面をリセット
     currentPlayer = 'red'; // プレイヤーをredに設定
     mode = 'play-with-smart-computer';
 });
 
+//main.js
 // 各列のボタンにクリックイベントを追加
 const columnButtons = document.querySelectorAll('.column-button');
 columnButtons.forEach(button => {
@@ -305,6 +322,7 @@ columnButtons.forEach(button => {
     });
 });
 
+//gameLogic.js
 function checkWinner(row, col, lastPlayer) {
     // 行と列の範囲をチェック
     if (row < 0 || row > 5 || col < 0 || col > 6) {
@@ -380,4 +398,63 @@ function checkWinner(row, col, lastPlayer) {
 
     
     return false; // 4つ並んでいない
+}
+
+//main.js
+// ゲームの状態を管理する変数
+let gameMode = null; // 'pvp' または 'pvc'
+
+//main.js
+// ページ読み込み時にモード選択画面を表示
+document.addEventListener('DOMContentLoaded', () => {
+    showModeSelection();
+});
+
+//main.js
+// モード選択画面の表示
+function showModeSelection() {
+    const modeSelection = document.getElementById('mode-selection');
+    modeSelection.style.display = 'flex';
+
+    // player vs player mode 
+    document.getElementById('pvp-mode').addEventListener('click', () => {
+        resetBoard(); // 盤面をリセット
+        currentPlayer = 'red'; // プレイヤーをredに設定
+        mode = 'play-with-friend';
+        modeSelection.style.display = 'none';
+    });
+
+    // player vs computer mode
+    document.getElementById('pvc-mode').addEventListener('click', () => {
+        resetBoard(); // 盤面をリセット
+        currentPlayer = 'red'; // プレイヤーをredに設定
+        mode = 'play-with-smart-computer';
+        modeSelection.style.display = 'none';
+    });
+}
+
+//いらない削除
+// ゲーム開始処理
+function startGame() {
+    if (gameMode === 'pvp') {
+        // プレイヤー対プレイヤーモードの初期化
+        initializePvPMode();
+    } else if (gameMode === 'pvc') {
+        // プレイヤー対コンピュータモードの初期化
+        initializePvCMode();
+    }
+}
+
+//いらない削除
+// PvPモードの初期化
+function initializePvPMode() {
+    // 既存のPvPモードのコードをここに
+    console.log('Starting PvP mode');
+}
+
+//いらない削除
+// PvCモードの初期化
+function initializePvCMode() {
+    // 既存のPvCモードのコードをここに
+    console.log('Starting PvC mode');
 }

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/board.css">
+    <link rel="stylesheet" href="../css/footer.css">
+    <script src="../JavaScript/include.js" defer></script> <!-- JavaScriptを読み込む -->
+</head>
+
+<body>
+<div id="header-container"></div> <!-- ここにヘッダーを埋め込む -->
+
+<!--画面を開くと最初にモード選択画面が出てくる-->
+<div id="mode-selection" class="mode-selection">
+    <div class="mode-selection-content">
+        <h2>ゲームモードを選択してください</h2>
+        <div class="mode-buttons">
+            <button id="pvp-mode">プレイヤー vs プレイヤー</button>
+            <button id="pvc-mode">プレイヤー vs コンピュータ</button>
+        </div>
+    </div>
+</div>
+<h2>Let's play Connect Four</h2>
+<button class="play-with-friend">Play with friend</button>
+<button class="play-with-idiot-computer">Play with Level1 Computer</button> 
+<button class="play-with-smart-computer">Play with level2 Computer</button> 
+
+<div id="game-container">
+    <div id="button-container">
+        <!-- 各列に対応するボタンを作成 -->
+        <button class="column-button" data-col="0">1</button>
+        <button class="column-button" data-col="1">2</button>
+        <button class="column-button" data-col="2">3</button>
+        <button class="column-button" data-col="3">4</button>
+        <button class="column-button" data-col="4">5</button>
+        <button class="column-button" data-col="5">6</button>
+        <button class="column-button" data-col="6">7</button>
+    </div>
+    <div id="board"></div> <!-- ここにボードが生成される -->
+</div>
+
+<div id="footer-container"></div>
+
+<script type="module" src="../JavaScript/main.js"></script>
+
+</body>
+</html>
