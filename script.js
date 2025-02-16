@@ -343,6 +343,31 @@ function checkWinner(row, col, lastPlayer) {
             cell2.classList.contains(currentColor) &&
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
+                if (勝者が決まった場合) {
+
+                    // 勝利したセルにアニメーションを追加
+    
+                    for (let i = 0; i < 4; i++) {
+    
+                        const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
+    
+                        if (winningCell) {
+    
+                            winningCell.classList.add('win'); // アニメーションを適用
+    
+                        }
+    
+                    }
+    
+                    // 勝利メッセージを表示
+    
+                    const winnerMessage = document.getElementById('winner-message');
+    
+                    winnerMessage.textContent = `${lastPlayer} の勝利！`;
+    
+                    winnerMessage.style.display = 'block'; // メッセージを表示
+                }
+
             return true; // 横に4つ並んでいる
         }
     }
@@ -359,6 +384,29 @@ function checkWinner(row, col, lastPlayer) {
             cell2.classList.contains(currentColor) &&
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
+                if (勝者が決まった場合) {
+
+                    // 勝利したセルにアニメーションを追加
+    
+                    for (let i = 0; i < 4; i++) {
+    
+                        const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
+    
+                        if (winningCell) {
+    
+                            winningCell.classList.add('win'); // アニメーションを適用
+    
+                        }
+    
+                    }
+    
+                    // 勝利メッセージを表示
+    
+                    const winnerMessage = document.getElementById('winner-message');
+    
+                    winnerMessage.textContent = `${lastPlayer} の勝利！`;
+    
+                    winnerMessage.style.display = 'block'; // メッセージを表示
             return true; // 縦に4つ並んでいる
         }
     }
@@ -376,6 +424,7 @@ function checkWinner(row, col, lastPlayer) {
             cell2.classList.contains(currentColor) &&
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
+
             return true; // 右下がりに4つ並んでいる
         }
     }
@@ -398,6 +447,7 @@ function checkWinner(row, col, lastPlayer) {
 
     
     return false; // 4つ並んでいない
+}
 }
 
 //main.js
