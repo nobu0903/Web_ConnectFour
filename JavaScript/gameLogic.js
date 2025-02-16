@@ -71,6 +71,10 @@ function checkWinner(row, col, lastPlayer) {
                 const winnerMessage = document.getElementById('winner-message');
                 winnerMessage.textContent = `${lastPlayer} の勝利！`;
                 winnerMessage.style.display = 'block'; // メッセージを表示
+
+                // 次へボタンを表示
+                const nextButton = document.getElementById('next-button');
+                nextButton.style.display = 'block'; // 次へボタンを表示
             }
             return true; // 横に4つ並んでいる
         }
@@ -101,6 +105,10 @@ function checkWinner(row, col, lastPlayer) {
                 const winnerMessage = document.getElementById('winner-message');
                 winnerMessage.textContent = `${lastPlayer} の勝利！`;
                 winnerMessage.style.display = 'block'; // メッセージを表示
+
+                // 次へボタンを表示
+                const nextButton = document.getElementById('next-button');
+                nextButton.style.display = 'block'; // 次へボタンを表示
             }
             return true; // 縦に4つ並んでいる
         }
@@ -132,6 +140,10 @@ function checkWinner(row, col, lastPlayer) {
                 const winnerMessage = document.getElementById('winner-message');
                 winnerMessage.textContent = `${lastPlayer} の勝利！`;
                 winnerMessage.style.display = 'block'; // メッセージを表示
+
+                // 次へボタンを表示
+                const nextButton = document.getElementById('next-button');
+                nextButton.style.display = 'block'; // 次へボタンを表示
             }
             return true; // 右下がりに4つ並んでいる
         }
@@ -162,6 +174,10 @@ function checkWinner(row, col, lastPlayer) {
                 const winnerMessage = document.getElementById('winner-message');
                 winnerMessage.textContent = `${lastPlayer} の勝利！`;
                 winnerMessage.style.display = 'block'; // メッセージを表示
+
+                // 次へボタンを表示
+                const nextButton = document.getElementById('next-button');
+                nextButton.style.display = 'block'; // 次へボタンを表示
             }
             return true; // 左下がりに4つ並んでいる
         }

@@ -93,3 +93,22 @@
 .mode-buttons button:hover {
     background-color: #0056b3;
 }
+
+/* styles.css */
+@keyframes winAnimation {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.win {
+    animation: winAnimation 1s infinite; /* 1秒間のアニメーションを無限に繰り返す */
+}
+
+#winner-message {
+    background-color: white;
+}
+
+#current-player-container {
+    background-color: white;
+}

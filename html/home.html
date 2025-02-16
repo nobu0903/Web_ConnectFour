@@ -41,11 +41,18 @@
         <button class="column-button" data-col="6">7</button>
     </div>
     <div id="board"></div> <!-- ここにボードが生成される -->
+    <!-- index.html または home.html -->
+<div id="current-player-container" class="current-player">
+    <h2>Current Player:</h2>
+    <div id="current-player" class="player-indicator">Red</div> <!-- 初期値をRedに設定 -->
+</div>
+    <div id="winner-message" style="display: none;"></div>
+    <button id="next-button">next</button>
 </div>
 
 <div id="footer-container"></div>
 
-<script type="module" src="../JavaScript/main.js"></script>
+<script src="../script.js"></script>
 
 </body>
 </html>

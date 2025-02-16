@@ -35,7 +35,7 @@ function dropPiece(col) {
             virtualBoard[row][col] = currentPlayer; // virtualBoardも更新
             const lastPlayer = currentPlayer; // 最後に置いたプレイヤーの色を保持
             if (checkWinner(row, col, lastPlayer)) { // 勝者の判定にlastPlayerを使用
-                alert(`${lastPlayer} win!!`); // 正しいプレイヤーの色を表示
+                console.log(`${lastPlayer} win!!`); // 正しいプレイヤーの色を表示
             }
             break;
         }
@@ -43,6 +43,7 @@ function dropPiece(col) {
     
     // プレイヤーのターンを交代
     currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red';
+    updateCurrentPlayerDisplay(); // 現在のプレイヤーを更新
     
     // コンピューターのターンを呼び出す
     if (currentPlayer === 'yellow' && (mode === 'play-with-idiot-computer')) {
@@ -343,31 +344,19 @@ function checkWinner(row, col, lastPlayer) {
             cell2.classList.contains(currentColor) &&
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
-                if (勝者が決まった場合) {
-
-                    // 勝利したセルにアニメーションを追加
-    
-                    for (let i = 0; i < 4; i++) {
-    
-                        const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
-    
-                        if (winningCell) {
-    
-                            winningCell.classList.add('win'); // アニメーションを適用
-    
-                        }
-    
+            // 勝者が決まった場合
+                // 勝利したセルにアニメーションを追加
+                for (let i = 0; i < 4; i++) {
+                    const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
+                    if (winningCell) {
+                        winningCell.classList.add('win'); // アニメーションを適用
                     }
-    
-                    // 勝利メッセージを表示
-    
-                    const winnerMessage = document.getElementById('winner-message');
-    
-                    winnerMessage.textContent = `${lastPlayer} の勝利！`;
-    
-                    winnerMessage.style.display = 'block'; // メッセージを表示
                 }
-
+                // 勝利メッセージを表示
+                const winnerMessage = document.getElementById('winner-message');
+                winnerMessage.textContent = `${lastPlayer} の勝利！`;
+                winnerMessage.style.display = 'block'; // メッセージを表示
+            
             return true; // 横に4つ並んでいる
         }
     }
@@ -384,29 +373,20 @@ function checkWinner(row, col, lastPlayer) {
             cell2.classList.contains(currentColor) &&
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
-                if (勝者が決まった場合) {
-
-                    // 勝利したセルにアニメーションを追加
-    
-                    for (let i = 0; i < 4; i++) {
-    
-                        const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
-    
-                        if (winningCell) {
-    
-                            winningCell.classList.add('win'); // アニメーションを適用
-    
-                        }
-    
+            // 勝者が決まった場合
+            
+                // 勝利したセルにアニメーションを追加
+                for (let i = 0; i < 4; i++) {
+                    const winningCell = document.querySelector(`.cell[data-row="${r + i}"][data-col="${col}"]`);
+                    if (winningCell) {
+                        winningCell.classList.add('win'); // アニメーションを適用
                     }
-    
-                    // 勝利メッセージを表示
-    
-                    const winnerMessage = document.getElementById('winner-message');
-    
-                    winnerMessage.textContent = `${lastPlayer} の勝利！`;
-    
-                    winnerMessage.style.display = 'block'; // メッセージを表示
+                }
+                // 勝利メッセージを表示
+                const winnerMessage = document.getElementById('winner-message');
+                winnerMessage.textContent = `${lastPlayer} の勝利！`;
+                winnerMessage.style.display = 'block'; // メッセージを表示
+            
             return true; // 縦に4つ並んでいる
         }
     }
@@ -424,7 +404,20 @@ function checkWinner(row, col, lastPlayer) {
             cell2.classList.contains(currentColor) &&
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
-
+            // 勝者が決まった場合
+            
+                // 勝利したセルにアニメーションを追加
+                for (let i = 0; i < 4; i++) {
+                    const winningCell = document.querySelector(`.cell[data-row="${row - d - i}"][data-col="${col - d - i}"]`);
+                    if (winningCell) {
+                        winningCell.classList.add('win'); // アニメーションを適用
+                    }
+                }
+                // 勝利メッセージを表示
+                const winnerMessage = document.getElementById('winner-message');
+                winnerMessage.textContent = `${lastPlayer} の勝利！`;
+                winnerMessage.style.display = 'block'; // メッセージを表示
+            
             return true; // 右下がりに4つ並んでいる
         }
     }
@@ -441,13 +434,26 @@ function checkWinner(row, col, lastPlayer) {
             cell2.classList.contains(currentColor) &&
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
+            // 勝者が決まった場合
+            
+                // 勝利したセルにアニメーションを追加
+                for (let i = 0; i < 4; i++) {
+                    const winningCell = document.querySelector(`.cell[data-row="${row + d + i}"][data-col="${col - d - i}"]`);
+                    if (winningCell) {
+                        winningCell.classList.add('win'); // アニメーションを適用
+                    }
+                
+                // 勝利メッセージを表示
+                const winnerMessage = document.getElementById('winner-message');
+                winnerMessage.textContent = `${lastPlayer} の勝利！`;
+                winnerMessage.style.display = 'block'; // メッセージを表示
+            }
             return true; // 左下がりに4つ並んでいる
         }
     }
 
     
     return false; // 4つ並んでいない
-}
 }
 
 //main.js
@@ -458,6 +464,13 @@ let gameMode = null; // 'pvp' または 'pvc'
 // ページ読み込み時にモード選択画面を表示
 document.addEventListener('DOMContentLoaded', () => {
     showModeSelection();
+    updateCurrentPlayerDisplay(); // 初期表示を更新
+    document.getElementById('next-button').addEventListener('click', () => {
+        resetBoard(); // 盤面をリセット
+        showModeSelection();
+        const nextButton = document.getElementById('next-button');
+        nextButton.style.display = 'block'; // メッセージを表示
+    });
 });
 
 //main.js
@@ -507,4 +520,15 @@ function initializePvPMode() {
 function initializePvCMode() {
     // 既存のPvCモードのコードをここに
     console.log('Starting PvC mode');
+}
+document.getElementById('next-button').addEventListener('click', () => {
+    const nextButton = document.getElementById('next-button');
+    resetBoard(); // 盤面をリセット
+    showModeSelection();
+    nextButton.style.display = 'block'; // メッセージを表示
+});
+
+function updateCurrentPlayerDisplay() {
+    const currentPlayerDisplay = document.getElementById('current-player');
+    currentPlayerDisplay.textContent = currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1); // プレイヤー名を表示
 }

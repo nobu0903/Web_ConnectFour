@@ -20,6 +20,8 @@
         "logo menu button" ;}
     }
 
+
+
 .header__logo {
     grid-area: logo; /* グリッドエリアの "logo" に配置 */
     font-weight: 800; 

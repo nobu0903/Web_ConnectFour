@@ -268,3 +268,7 @@ footer {
 .win {
     animation: winAnimation 1s infinite; /* 1秒間のアニメーションを無限に繰り返す */
 }
+
+#winner-message {
+    background-color: white;
+}
