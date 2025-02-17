@@ -59,23 +59,22 @@ function checkWinner(row, col, lastPlayer) {
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
             // 勝者が決まった場合
-            if (勝者が決まった場合) {
-                // 勝利したセルにアニメーションを追加
-                for (let i = 0; i < 4; i++) {
-                    const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
-                    if (winningCell) {
-                        winningCell.classList.add('win'); // アニメーションを適用
-                    }
+            // 勝利したセルにアニメーションを追加
+            for (let i = 0; i < 4; i++) {
+                const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
+                if (winningCell) {
+                    winningCell.classList.add('win'); // アニメーションを適用
                 }
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
-
-                // 次へボタンを表示
-                const nextButton = document.getElementById('next-button');
-                nextButton.style.display = 'block'; // 次へボタンを表示
             }
+            // 勝利メッセージを表示
+            const winnerMessage = document.getElementById('winner-message');
+            winnerMessage.textContent = `${lastPlayer} の勝利！`;
+            winnerMessage.style.display = 'block'; // メッセージを表示
+
+            // 次へボタンを表示
+            const nextButton = document.getElementById('next-button');
+            nextButton.style.display = 'block'; // 次へボタンを表示
+            
             return true; // 横に4つ並んでいる
         }
     }
@@ -93,34 +92,32 @@ function checkWinner(row, col, lastPlayer) {
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
             // 勝者が決まった場合
-            if (勝者が決まった場合) {
-                // 勝利したセルにアニメーションを追加
-                for (let i = 0; i < 4; i++) {
-                    const winningCell = document.querySelector(`.cell[data-row="${r + i}"][data-col="${col}"]`);
-                    if (winningCell) {
-                        winningCell.classList.add('win'); // アニメーションを適用
-                    }
+            // 勝利したセルにアニメーションを追加
+            for (let i = 0; i < 4; i++) {
+                const winningCell = document.querySelector(`.cell[data-row="${r + i}"][data-col="${col}"]`);
+                if (winningCell) {
+                    winningCell.classList.add('win'); // アニメーションを適用
                 }
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
-
-                // 次へボタンを表示
-                const nextButton = document.getElementById('next-button');
-                nextButton.style.display = 'block'; // 次へボタンを表示
             }
+            // 勝利メッセージを表示
+            const winnerMessage = document.getElementById('winner-message');
+            winnerMessage.textContent = `${lastPlayer} の勝利！`;
+            winnerMessage.style.display = 'block'; // メッセージを表示
+
+            // 次へボタンを表示
+            const nextButton = document.getElementById('next-button');
+            nextButton.style.display = 'block'; // 次へボタンを表示
+            
             return true; // 縦に4つ並んでいる
         }
     }
 
     // 斜め方向のチェック（右下がり）
     for (let d = -3; d <= 0; d++) {
-        const cell1 = document.querySelector(`.cell[data-row="${row - d}"][data-col="${col - d}"]`);//dがマイナスだからマイナスのマイナスでdata-rowはプラスになる。
+        const cell1 = document.querySelector(`.cell[data-row="${row - d}"][data-col="${col - d}"]`);
         const cell2 = document.querySelector(`.cell[data-row="${row - d - 1}"][data-col="${col - d - 1}"]`);
         const cell3 = document.querySelector(`.cell[data-row="${row - d - 2}"][data-col="${col - d - 2}"]`);
         const cell4 = document.querySelector(`.cell[data-row="${row - d - 3}"][data-col="${col - d - 3}"]`);
-        console.log("右下がりの勝者チェック開始")
 
         if (cell1 && cell2 && cell3 && cell4 && 
             cell1.classList.contains(currentColor) &&
@@ -128,23 +125,22 @@ function checkWinner(row, col, lastPlayer) {
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
             // 勝者が決まった場合
-            if (勝者が決まった場合) {
-                // 勝利したセルにアニメーションを追加
-                for (let i = 0; i < 4; i++) {
-                    const winningCell = document.querySelector(`.cell[data-row="${row - d - i}"][data-col="${col - d - i}"]`);
-                    if (winningCell) {
-                        winningCell.classList.add('win'); // アニメーションを適用
-                    }
+            // 勝利したセルにアニメーションを追加
+            for (let i = 0; i < 4; i++) {
+                const winningCell = document.querySelector(`.cell[data-row="${row - d - i}"][data-col="${col - d - i}"]`);
+                if (winningCell) {
+                    winningCell.classList.add('win'); // アニメーションを適用
                 }
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
-
-                // 次へボタンを表示
-                const nextButton = document.getElementById('next-button');
-                nextButton.style.display = 'block'; // 次へボタンを表示
             }
+            // 勝利メッセージを表示
+            const winnerMessage = document.getElementById('winner-message');
+            winnerMessage.textContent = `${lastPlayer} の勝利！`;
+            winnerMessage.style.display = 'block'; // メッセージを表示
+
+            // 次へボタンを表示
+            const nextButton = document.getElementById('next-button');
+            nextButton.style.display = 'block'; // 次へボタンを表示
+            
             return true; // 右下がりに4つ並んでいる
         }
     }
@@ -162,28 +158,26 @@ function checkWinner(row, col, lastPlayer) {
             cell3.classList.contains(currentColor) &&
             cell4.classList.contains(currentColor)) {
             // 勝者が決まった場合
-            if (勝者が決まった場合) {
-                // 勝利したセルにアニメーションを追加
-                for (let i = 0; i < 4; i++) {
-                    const winningCell = document.querySelector(`.cell[data-row="${row + d + i}"][data-col="${col - d - i}"]`);
-                    if (winningCell) {
-                        winningCell.classList.add('win'); // アニメーションを適用
-                    }
+            // 勝利したセルにアニメーションを追加
+            for (let i = 0; i < 4; i++) {
+                const winningCell = document.querySelector(`.cell[data-row="${row + d + i}"][data-col="${col - d - i}"]`);
+                if (winningCell) {
+                    winningCell.classList.add('win'); // アニメーションを適用
                 }
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
-
-                // 次へボタンを表示
-                const nextButton = document.getElementById('next-button');
-                nextButton.style.display = 'block'; // 次へボタンを表示
             }
+            // 勝利メッセージを表示
+            const winnerMessage = document.getElementById('winner-message');
+            winnerMessage.textContent = `${lastPlayer} の勝利！`;
+            winnerMessage.style.display = 'block'; // メッセージを表示
+
+            // 次へボタンを表示
+            const nextButton = document.getElementById('next-button');
+            nextButton.style.display = 'block'; // 次へボタンを表示
+            
             return true; // 左下がりに4つ並んでいる
         }
     }
 
-    
     return false; // 4つ並んでいない
 }
 

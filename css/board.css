@@ -109,6 +109,41 @@
     background-color: white;
 }
 
-#current-player-container {
-    background-color: white;
+.turn-indicator {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 15px;
+    color: red;
+    transition: color 0.3s ease;
 }
+
+
+
+
+
+
+
+.next-button {
+    display: flex;
+    align-items: center;
+    background-color: #0074D9;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.next-button:hover {
+    background-color: #0056A3;
+}
+
+.next-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+}
+

@@ -3,6 +3,7 @@ const board = document.getElementById("board");
 const dropButton = document.getElementById("dropButton");
 let currentPlayer = 'red'; // プレイヤーの色を管理
 let mode = 'play-with-friend';
+let winner = null; // 勝者を管理する変数を追加
 
 //board.js
 // 盤面を作る（7列 × 6行）
@@ -24,17 +25,22 @@ createBoard();
 //gameLogic.js
 // 駒を落とす関数
 function dropPiece(col) {
+    if (winner) return; // 勝者が決まっている場合は処理を終了
+
     for (let row = 5; row >= 0; row--) { // 下から上に向かって探す
         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         if (isColumnFull(col)) {
-            alert('Error: This column is already full. \nPlease choose other one');
+            alert('Error: This column is already full. \nPlease choose another one');
             return; // 列が埋まっている場合は処理を終了
         }
         if (!cell.classList.contains('red') && !cell.classList.contains('yellow')) { // 空のセルを探す
             cell.classList.add(currentPlayer); // 現在のプレイヤーの色を追加
             virtualBoard[row][col] = currentPlayer; // virtualBoardも更新
             const lastPlayer = currentPlayer; // 最後に置いたプレイヤーの色を保持
+            
+            // 勝者の判定
             if (checkWinner(row, col, lastPlayer)) { // 勝者の判定にlastPlayerを使用
+                winner = lastPlayer; // 勝者を設定
                 console.log(`${lastPlayer} win!!`); // 正しいプレイヤーの色を表示
             }
             break;
@@ -43,15 +49,17 @@ function dropPiece(col) {
     
     // プレイヤーのターンを交代
     currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red';
-    updateCurrentPlayerDisplay(); // 現在のプレイヤーを更新
+    updateTurn(currentPlayer);
+    
+    // 勝者が決まった場合、ターン更新をスキップ
+    if (winner) {
+        return; // 勝者が決まった場合は処理を終了
+    }
     
     // コンピューターのターンを呼び出す
     if (currentPlayer === 'yellow' && (mode === 'play-with-idiot-computer')) {
         idiotComputerTurn(); // コンピューターのターン
-    }
-    //後で変えるミニマックス作ったら適用する
-    //ifにしてたらidiot computer押してもsmart computer呼び出されてたけどelse ifにしたらidiot computer が適用された
-    else if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer')) {
+    } else if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer-level1' || mode === 'play-with-smart-computer-level2' || mode === 'play-with-smart-computer-level3')) {
         smartComputerTurn(); // コンピューターのターン
     }
 }
@@ -64,6 +72,8 @@ function resetBoard() {
     // virtualBoardもリセット
     virtualBoard = Array.from({ length: 6 }, () => Array(7).fill(null));
     currentPlayer = 'red';
+    winner = null;
+    updateTurn(currentPlayer);
 }
 
 //board.js
@@ -106,11 +116,28 @@ function smartComputerTurn() {
 
     for (const col of availableColumns) {
         const newNode = createNewNode(virtualBoard, col, currentPlayer);/* ゲームの新しい状態を作成 */
-        const score = minimax(newNode, 3, false, -Infinity, Infinity); // 深さ3で評価
-        if (score > bestScore) {
-            bestScore = score;
-            bestCol = col;
+        if (mode === 'play-with-smart-computer-level1') {
+            const score = minimax(newNode, 1, false, -Infinity, Infinity); // 深さ3で評価
+            if (score > bestScore) {
+                bestScore = score;
+                bestCol = col;
+            }
+        } 
+        else if (mode === 'play-with-smart-computer-level2') {
+            const score = minimax(newNode, 2, false, -Infinity, Infinity); // 深さ3で評価
+            if (score > bestScore) {
+                bestScore = score;
+                bestCol = col;
+            }
         }
+        else if (mode === 'play-with-smart-computer-level3') {
+            const score = minimax(newNode, 3, false, -Infinity, Infinity); // 深さ3で評価
+            if (score > bestScore) {
+                bestScore = score;
+                bestCol = col;
+            }
+        }
+        
     }
 
     dropPiece(bestCol);
@@ -310,7 +337,7 @@ document.querySelector('.play-with-idiot-computer').addEventListener('click', ()
 document.querySelector('.play-with-smart-computer').addEventListener('click', () => {
     resetBoard(); // 盤面をリセット
     currentPlayer = 'red'; // プレイヤーをredに設定
-    mode = 'play-with-smart-computer';
+    mode = 'play-with-smart-computer-level3';
 });
 
 //main.js
@@ -318,6 +345,7 @@ document.querySelector('.play-with-smart-computer').addEventListener('click', ()
 const columnButtons = document.querySelectorAll('.column-button');
 columnButtons.forEach(button => {
     button.addEventListener('click', () => {
+        if (winner) return; // 勝者が決まっている場合は何もしない
         const col = button.dataset.col; // ボタンから列番号を取得
         dropPiece(col); // 駒を落とす
     });
@@ -356,6 +384,8 @@ function checkWinner(row, col, lastPlayer) {
                 const winnerMessage = document.getElementById('winner-message');
                 winnerMessage.textContent = `${lastPlayer} の勝利！`;
                 winnerMessage.style.display = 'block'; // メッセージを表示
+
+                
             
             return true; // 横に4つ並んでいる
         }
@@ -489,11 +519,31 @@ function showModeSelection() {
 
     // player vs computer mode
     document.getElementById('pvc-mode').addEventListener('click', () => {
+        document.getElementById('pvc-levels').style.display = 'block'; // レベル選択を表示
+    });
+    
+    // 各レベルボタンにイベントリスナーを追加
+    document.getElementById('pvc-mode-level1').addEventListener('click', () => {
         resetBoard(); // 盤面をリセット
         currentPlayer = 'red'; // プレイヤーをredに設定
-        mode = 'play-with-smart-computer';
+        mode = 'play-with-smart-computer-level1'; // モードを設定
         modeSelection.style.display = 'none';
     });
+    
+    document.getElementById('pvc-mode-level2').addEventListener('click', () => {
+        resetBoard(); // 盤面をリセット
+        currentPlayer = 'red'; // プレイヤーをredに設定
+        mode = 'play-with-smart-computer-level2'; // モードを設定
+        modeSelection.style.display = 'none';
+    });
+    
+    document.getElementById('pvc-mode-level3').addEventListener('click', () => {
+        resetBoard(); // 盤面をリセット
+        currentPlayer = 'red'; // プレイヤーをredに設定
+        mode = 'play-with-smart-computer-level3'; // モードを設定
+        modeSelection.style.display = 'none';
+    });
+    
 }
 
 //いらない削除
@@ -528,7 +578,26 @@ document.getElementById('next-button').addEventListener('click', () => {
     nextButton.style.display = 'block'; // メッセージを表示
 });
 
-function updateCurrentPlayerDisplay() {
-    const currentPlayerDisplay = document.getElementById('current-player');
-    currentPlayerDisplay.textContent = currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1); // プレイヤー名を表示
+function updateTurn(player) {
+    let turnIndicator = document.getElementById("turnIndicator");
+    
+
+    if (player === "red") {
+        turnIndicator.textContent = "red Turn";
+        turnIndicator.style.color = "red";
+    } else if (player === "yellow") {
+        turnIndicator.textContent = "yellow Turn";
+        turnIndicator.style.color = "yellow";
+    } 
+    
+    // 勝者が決まった場合の処理を追加
+    if (winner) { // 勝者の判定にlastPlayerを使用
+        turnIndicator.textContent = `${winner} wins!`; // 勝者の名前を表示
+        turnIndicator.style.color = "white";
+    }
 }
+
+
+
+
+

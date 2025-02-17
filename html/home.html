@@ -21,6 +21,11 @@
         <div class="mode-buttons">
             <button id="pvp-mode">プレイヤー vs プレイヤー</button>
             <button id="pvc-mode">プレイヤー vs コンピュータ</button>
+            <div id="pvc-levels" style="display: none; margin-top: 20px;"> <!-- PVCレベル選択 -->
+                <button id="pvc-mode-level1">Level 1</button>
+                <button id="pvc-mode-level2">Level 2</button>
+                <button id="pvc-mode-level3">Level 3</button>
+            </div>
         </div>
     </div>
 </div>
@@ -42,12 +47,15 @@
     </div>
     <div id="board"></div> <!-- ここにボードが生成される -->
     <!-- index.html または home.html -->
-<div id="current-player-container" class="current-player">
-    <h2>Current Player:</h2>
-    <div id="current-player" class="player-indicator">Red</div> <!-- 初期値をRedに設定 -->
+    <div id="turnIndicator" class="turn-indicator">Your Turn</div>
+
 </div>
     <div id="winner-message" style="display: none;"></div>
-    <button id="next-button">next</button>
+    <div class="next-button" id="next-button">
+        <img src="../images/next-icon.jpg" alt="next Icon" class="next-icon">
+        <span>Next</span>
+    </div>
+    
 </div>
 
 <div id="footer-container"></div>
