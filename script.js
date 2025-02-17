@@ -55,11 +55,7 @@ function dropPiece(col) {
     if (winner) {
         return; // 勝者が決まった場合は処理を終了
     }
-    
-    // コンピューターのターンを呼び出す
-    if (currentPlayer === 'yellow' && (mode === 'play-with-idiot-computer')) {
-        idiotComputerTurn(); // コンピューターのターン
-    } else if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer-level1' || mode === 'play-with-smart-computer-level2' || mode === 'play-with-smart-computer-level3')) {
+     else if (currentPlayer === 'yellow' && (mode === 'play-with-smart-computer-level1' || mode === 'play-with-smart-computer-level2' || mode === 'play-with-smart-computer-level3')) {
         smartComputerTurn(); // コンピューターのターン
     }
 }
@@ -80,23 +76,6 @@ function resetBoard() {
 function isColumnFull(col) {
     const cell = document.querySelector(`.cell[data-row="0"][data-col="${col}"]`);
     return cell && (cell.classList.contains('red') || cell.classList.contains('yellow'));
-}
-
-//いらない削除
-function idiotComputerTurn() {
-    const availableColumns = [];
-
-    for(let col = 0; col < 7; col++) {
-        const cell = document.querySelector(`.cell[data-row="0"][data-col="${col}"]`);
-        if (!cell.classList.contains('red') && !cell.classList.contains('yellow')) {
-            availableColumns.push(col)//availableColumnというArrayにcol numberを入れる
-        }
-    }
-    //空いているcolumnがあればrandomで駒を落とす
-    if (availableColumns.length > 0) {
-        const randomCol = availableColumns[Math.floor(Math.random() * availableColumns.length)];
-        dropPiece(randomCol);
-    }
 }
 
 //computer.js
@@ -320,25 +299,10 @@ function evaluateLine(compCount, playerCount) {
 //main.js
 // ボタンにイベントリスナーを追加
 //play with computer と一緒だから変えないといけない
-document.querySelector('.play-with-friend').addEventListener('click', () => {
-    resetBoard(); // 盤面をリセット
-    currentPlayer = 'red'; // プレイヤーをredに設定
-    mode = 'play-with-friend';
-});
 
-//main.js
-document.querySelector('.play-with-idiot-computer').addEventListener('click', () => {
-    resetBoard(); // 盤面をリセット
-    currentPlayer = 'red'; // プレイヤーをredに設定
-    mode = 'play-with-idiot-computer';
-});
 
-//main.js
-document.querySelector('.play-with-smart-computer').addEventListener('click', () => {
-    resetBoard(); // 盤面をリセット
-    currentPlayer = 'red'; // プレイヤーをredに設定
-    mode = 'play-with-smart-computer-level3';
-});
+
+
 
 //main.js
 // 各列のボタンにクリックイベントを追加
@@ -375,17 +339,11 @@ function checkWinner(row, col, lastPlayer) {
             // 勝者が決まった場合
                 // 勝利したセルにアニメーションを追加
                 for (let i = 0; i < 4; i++) {
-                    const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col + i}"]`);
+                    const winningCell = document.querySelector(`.cell[data-row="${row}"][data-col="${c+i}"]`);
                     if (winningCell) {
                         winningCell.classList.add('win'); // アニメーションを適用
                     }
                 }
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
-
-                
             
             return true; // 横に4つ並んでいる
         }
@@ -412,10 +370,7 @@ function checkWinner(row, col, lastPlayer) {
                         winningCell.classList.add('win'); // アニメーションを適用
                     }
                 }
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
+                
             
             return true; // 縦に4つ並んでいる
         }
@@ -443,10 +398,7 @@ function checkWinner(row, col, lastPlayer) {
                         winningCell.classList.add('win'); // アニメーションを適用
                     }
                 }
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
+                
             
             return true; // 右下がりに4つ並んでいる
         }
@@ -472,11 +424,6 @@ function checkWinner(row, col, lastPlayer) {
                     if (winningCell) {
                         winningCell.classList.add('win'); // アニメーションを適用
                     }
-                
-                // 勝利メッセージを表示
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `${lastPlayer} の勝利！`;
-                winnerMessage.style.display = 'block'; // メッセージを表示
             }
             return true; // 左下がりに4つ並んでいる
         }
@@ -596,8 +543,4 @@ function updateTurn(player) {
         turnIndicator.style.color = "white";
     }
 }
-
-
-
-
 

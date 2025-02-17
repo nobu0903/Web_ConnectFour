@@ -10,3 +10,7 @@ body {
     width: 100%;
     overflow-x: hidden; /* 横スクロールを防ぐ */
 }
+
+h2 {
+    color: green;
+}
