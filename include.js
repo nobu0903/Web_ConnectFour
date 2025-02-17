@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     //ヘッダーを読み込む
-    fetch("/partials/header.html")
+    fetch("/html/partials/header.html")
         .then(response => response.text())
         .then(data => {
             document.getElementById("header-container").innerHTML = data;
@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(error => console.error("ヘッダーの読み込みに失敗しました:", error));
 
      // フッターを読み込む
-     fetch("/partials/footer.html")
+     fetch("/html/partials/footer.html")
         .then(response => response.text())
         .then(data => {
             document.getElementById("footer-container").innerHTML = data;
