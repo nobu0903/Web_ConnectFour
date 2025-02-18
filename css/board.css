@@ -14,6 +14,7 @@
     max-width: 600px;
     margin-bottom: 10px;
     gap: 5px; /* ボタン間の間隔 */
+    gap: clamp(2px, 1vw, 5px); /* 画面サイズに応じて gap を縮小 */
 }
 
 .column-button {
@@ -24,11 +25,35 @@
     cursor: pointer;
 }
 
-/* 小さい画面ではボタンサイズを調整 */
+/* 小さな画面用 */
+@media (max-width: 600px) {
+    .column-button {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+    #button-container {
+        gap: 4px; /* ボタン間のスペースをさらに縮小 */
+    }
+}
+
 @media (max-width: 400px) {
     .column-button {
-        padding: 5px;
         font-size: 12px;
+        padding: 4px 8px;
+    }
+    #button-container {
+        gap: 2px; /* ボタン間のスペースをさらに縮小 */
+    }
+}
+/* iPhone SEサイズ（幅 320px 以下）で最小サイズに */
+@media (max-width: 320px) {
+    .column-button {
+        min-width: 28px;
+        padding: 3px 6px;
+        font-size: 9px;
+    }
+    #button-container {
+        gap: 0px; /* 最小間隔にする */
     }
 }
 
