@@ -441,7 +441,6 @@ let gameMode = null; // 'pvp' または 'pvc'
 // ページ読み込み時にモード選択画面を表示
 document.addEventListener('DOMContentLoaded', () => {
     showModeSelection();
-    updateCurrentPlayerDisplay(); // 初期表示を更新
     document.getElementById('next-button').addEventListener('click', () => {
         resetBoard(); // 盤面をリセット
         showModeSelection();
