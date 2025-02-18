@@ -2,30 +2,66 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;       /* 画面サイズに合わせる */
+    max-width: 600px;  /* ボードの最大幅を決める */
 }
+
 
 #button-container {
-    margin-bottom: 10px; /*ボタンのとボードの間に１０ｐｘの空間を入れる*/
+    display: flex;
+    justify-content: center;
+    width: 90%; /* ボードの幅に合わせる */
+    max-width: 600px;
+    margin-bottom: 10px;
+    gap: 5px; /* ボタン間の間隔 */
 }
 
+.column-button {
+    flex: 1; /* ボタンの幅を均等に */
+    min-width: 20px; /* 小さすぎるのを防ぐ */
+    padding: 8px; /* 少し小さめのパディング */
+    font-size: clamp(12px, 2vw, 16px); /* 画面サイズに応じたフォントサイズ */
+    cursor: pointer;
+}
+
+/* 小さい画面ではボタンサイズを調整 */
+@media (max-width: 400px) {
+    .column-button {
+        padding: 5px;
+        font-size: 12px;
+    }
+}
+
+
+
+
+
+
+
 #board {
-    display: grid;
+    display:grid ;
     grid-template-columns: repeat(7, 60px);
     grid-template-rows: repeat(6, 60px);
     gap: 5px;
     background-color: blue;
     padding: 10px;
     border-radius: 10px;
-    width: fit-content;
+    width: 90%;
     margin: auto;
+    max-width: 600px;   /* 最大サイズを決める */
+    aspect-ratio: 7 / 6; /* ボードの比率を固定 */
+    /* セルの大きさを自動調整 */
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+    gap: 5px;
 }
 
 .cell {
-    width: 60px;
-    height: 60px;
+    width: 100%;  /* 画面幅に応じて縮小 */
+    height: 100%; /* 縦横サイズを統一 */
     background-color: white;
     border-radius: 50%;
-    display: flex;
+    display:flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 1); /* 影の効果 */
@@ -145,5 +181,11 @@
     width: 24px;
     height: 24px;
     margin-right: 10px;
+}
+
+.container {
+    display: flex;
+  flex-direction: column;
+  align-items: center; /* ボードを中央揃え */
 }
 
