@@ -287,11 +287,11 @@ function evaluateBoard(node) {
 function evaluateLine(compCount, playerCount) {
     if (compCount > 0 && playerCount > 0) return 0;
     if (compCount === 4) return 1000; // 勝利状態
-    if (compCount === 3) return 70;  // より大きな重み
-    if (compCount === 2) return 30;   // より大きな重み
+    if (compCount === 3) return 77;  // より大きな重み
+    if (compCount === 2) return 27;   // より大きな重み
     if (playerCount === 4) return -1000;
-    if (playerCount === 3) return -70;
-    if (playerCount === 2) return -30;
+    if (playerCount === 3) return -77;
+    if (playerCount === 2) return -35;
     return compCount - playerCount; // 1個の駒も評価
 }
 
