@@ -58,11 +58,6 @@
 }
 
 
-
-
-
-
-
 #board {
     display:grid ;
     grid-template-columns: repeat(7, 60px);
@@ -170,6 +165,7 @@
     background-color: white;
 }
 
+/*turn indicator のCSS*/
 .turn-indicator {
     font-size: 24px;
     font-weight: bold;
@@ -179,12 +175,7 @@
     transition: color 0.3s ease;
 }
 
-
-
-
-
-
-
+/*next-buttonのCSS*/
 .next-button {
     display: flex;
     align-items: center;
