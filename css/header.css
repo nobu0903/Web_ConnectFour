@@ -4,13 +4,14 @@
     position: relative;
     background-color:darkorange;
     display: grid; /* グリッドレイアウトを使用 */
-    align-items: center; /* グリッドアイテムを縦方向の中央に揃える */
+    
     grid-template-columns: 1fr 1fr; /* 2つの列を均等に配置 */
     grid-template-rows: auto; /* 行の高さを自動調整 */
     padding-top: 10px; /* 上部に10pxのパディングを追加 */
     grid-template-areas: 
     "logo button" /* 1行目にロゴとボタンを配置 */
     "menu menu"; /* 2行目にメニューを2列分配置 */
+    
 }
 
 @media only screen and (min-width: 769px) {
