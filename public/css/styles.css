@@ -1,0 +1,15 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    color: var(--black);
+    font-size: var(--font-size-base);
+    background-color: #1E1E1E;
+    margin: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden; /* 横スクロールを防ぐ */
+}
+
+h2 {
+    color: green;
+}
