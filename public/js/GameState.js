@@ -18,18 +18,21 @@ export function switchPlayer() {
     currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red'; // プレイヤーを切り替える
 }
 
-export let mode = 'play-with-friend';
+export let mode = null;
+export function resetModePlayInOnline () {
+    mode = "play-in-online";
+}
 export function resetModePlayWithFrirend () {
-    mode = "play-with-friend"
+    mode = "play-with-friend";
 }
 export function resetModePlayWithLevel1 () {
-    mode = "play-with-smart-computer-level1"
+    mode = "play-with-smart-computer-level1";
 }
 export function resetModePlayWithLevel2  () {
-    mode = "play-with-smart-computer-level2"
+    mode = "play-with-smart-computer-level2";
 }
 export function resetModePlayWithLevel3  () {
-    mode = "play-with-smart-computer-level3"
+    mode = "play-with-smart-computer-level3";
 }
 export let winner = null; // 勝者を管理する変数を追加
 export function resetWinnerToRed() {

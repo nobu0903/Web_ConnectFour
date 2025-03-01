@@ -50,6 +50,17 @@ wss.on("connection", (ws) => {
                 player2.send(JSON.stringify({ type: "gameStart", roomId }));
             }
         }
+
+        if (data.type === 'move') {
+            
+            // すべてのクライアントに動きをブロードキャスト
+            wss.clients.forEach((client) => {
+                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({ type: 'move', move: data.move }));
+                    console.log('動きが受信されました:', data.move);
+                }
+            });
+        }
     });
 
     ws.on("close", () => {
