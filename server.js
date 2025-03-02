@@ -101,7 +101,9 @@ wss.on("connection", (ws) => {
     });
 });
 
-// サーバーをポート3000で起動
-server.listen(3000, () => {
-    console.log("サーバーがポート3000で起動");
+
+
+const PORT = process.env.PORT || 3000;  // 環境変数 PORT を優先
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
