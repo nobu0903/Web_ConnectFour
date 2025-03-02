@@ -64,9 +64,8 @@ export function initializeWebSocket(token = null) {
                 const player2Name = document.getElementById("player2-name");
                 const player2Rating = document.getElementById("player2-rating");
 
-                // レーティング情報のデフォルト値を設定
-                const myRating = data.rating || 1500;
-                const opponentRating = data.opponentRating || 1500;
+                const myRating = data.rating;
+                const opponentRating = data.opponentRating;
 
                 console.log("レーティング情報:", { myRating, opponentRating });
 
@@ -228,7 +227,8 @@ export function dropPiece(col, isOpponentMove = false) {
                     const message = {
                         type: "gameEnd",
                         roomId: gameState.currentRoomId,
-                        winner: lastPlayer
+                        winner: lastPlayer,
+                        result: 'win'  // 勝利の場合
                     };
                     console.log("ゲーム終了メッセージを送信:", message);
                     socket.send(JSON.stringify(message));
@@ -269,7 +269,8 @@ export function dropPiece(col, isOpponentMove = false) {
                 const message = {
                     type: "gameEnd",
                     roomId: gameState.currentRoomId,
-                    isDraw: true
+                    isDraw: true,
+                    result: 'draw'  // 引き分けの場合
                 };
                 console.log("引き分けメッセージを送信:", message);
                 socket.send(JSON.stringify(message));

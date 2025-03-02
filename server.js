@@ -169,7 +169,8 @@ wss.on("connection", async (ws, req) => {
                             roomId, 
                             playerNumber: 1,
                             isFirstMove: true,
-                            rating: firstPlayer.rating
+                            rating: firstPlayer.rating,
+                            opponentRating: secondPlayer.rating
                         }));
                         console.log("先手プレイヤーにメッセージを送信");
 
@@ -178,7 +179,8 @@ wss.on("connection", async (ws, req) => {
                             roomId, 
                             playerNumber: 2,
                             isFirstMove: false,
-                            rating: secondPlayer.rating
+                            rating: secondPlayer.rating,
+                            opponentRating: firstPlayer.rating
                         }));
                         console.log("後手プレイヤーにメッセージを送信");
                     } catch (error) {
