@@ -24,9 +24,9 @@ const wss = new WebSocketServer({ server });
 // セキュリティ設定
 app.use(helmet());
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? ['https://web-connectfour.onrender.com'] 
-        : '*'
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // レート制限の設定
@@ -83,6 +83,11 @@ app.post('/api/login', async (req, res) => {
         const { username, password } = req.body;
         console.log('ログイン試行:', { username });
         
+        if (!username || !password) {
+            console.log('ユーザー名またはパスワードが未入力');
+            return res.status(400).json({ error: 'ユーザー名とパスワードを入力してください' });
+        }
+        
         // ユーザーを検索
         const user = await User.findOne({ username });
         if (!user) {
@@ -104,8 +109,8 @@ app.post('/api/login', async (req, res) => {
         console.log('ログイン成功:', username);
         res.json({ token });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(400).json({ error: error.message });
+        console.error('ログインエラーの詳細:', error);
+        res.status(500).json({ error: 'サーバーエラーが発生しました' });
     }
 });
 
