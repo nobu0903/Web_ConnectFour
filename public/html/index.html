@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connect Four</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/header.css">
     <link rel="stylesheet" href="/css/footer.css">
     <link rel="stylesheet" href="/css/board.css">
-
+    <link rel="stylesheet" href="/css/auth.css">
 </head>
 
 <body>
@@ -30,6 +31,18 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div id="login-signup-container" class="auth-container">
+            <form id="auth-form" class="auth-form">
+                <h2 id="auth-title">ログイン</h2>
+                <input type="text" id="username" placeholder="ユーザー名" required>
+                <input type="password" id="password" placeholder="パスワード" required>
+                <button type="submit" id="auth-submit">ログイン</button>
+                <div class="auth-toggle">
+                    <span id="auth-toggle-text">アカウントをお持ちでない方はこちら</span>
+                </div>
+                <div id="auth-error" class="auth-error"></div>
+            </form>
         </div>
         <h2>Let's play Connect Four</h2>
         <h2 id="gameStatus" style="display: none;"></h2>

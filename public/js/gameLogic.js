@@ -1,21 +1,97 @@
 import * as gameState from "./GameState.js";
 import { isColumnFull, resetBoard } from "./board.js";
 import { smartComputerTurn } from "./computer.js";
+import { showAuthForm } from "./auth.js";
 
-// WebSocketの接続を確立
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const wsHost = window.location.host;
-const socket = new WebSocket(`${wsProtocol}//${wsHost}`);
+// WebSocketのグローバル変数
+let socket = null;
+
+// WebSocket接続を確立する関数
+export function initializeWebSocket(token = null) {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host;
+    const wsUrl = token 
+        ? `${wsProtocol}//${wsHost}?token=${token}`
+        : `${wsProtocol}//${wsHost}`;
+    
+    if (socket) {
+        console.log('既存のWebSocket接続を閉じます');
+        socket.close();
+    }
+    
+    console.log('新しいWebSocket接続を作成します:', wsUrl);
+    socket = new WebSocket(wsUrl);
+    
+    socket.onopen = () => {
+        console.log('WebSocket接続が確立されました。状態:', socket.readyState);
+    };
+    
+    socket.onclose = () => {
+        console.log('WebSocket接続が切断されました');
+    };
+    
+    socket.onerror = (error) => {
+        console.error('WebSocket エラー:', error);
+    };
+    
+    // WebSocketメッセージハンドラの設定
+    socket.onmessage = (event) => {
+        console.log("受信したメッセージ:", event.data);
+        try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === "gameStart") {
+                console.log("ゲーム開始メッセージを受信:", data);
+                
+                // 最初にゲームの状態をリセット
+                resetBoard();
+                gameState.resetCurrentPlayer();
+                gameState.resetModePlayInOnline();
+                
+                // ルームIDを設定
+                gameState.setCurrentRoomId(data.roomId);
+                console.log("設定されたルームID:", data.roomId);
+                
+                // 先手後手の設定
+                gameState.setMyTurn(data.isFirstMove);
+                console.log("自分のターン:", data.isFirstMove);
+                
+                const gameStatus = document.getElementById("gameStatus");
+                gameStatus.textContent = `ゲームが開始されました！${data.isFirstMove ? '（先手）' : '（後手）'}`;
+                gameStatus.style.display = "block";
+                
+                // ターンインジケーターを表示
+                document.getElementById("turnIndicator").style.display = "block";
+                updateTurn(gameState.currentPlayer);
+            } else if (data.type === "move") {
+                console.log("moveメッセージを受信。ルームID:", data.roomId, "現在のルームID:", gameState.currentRoomId);
+                if (data.roomId === gameState.currentRoomId) {
+                    console.log("相手の手:", data.move);
+                    const column = parseInt(data.move.col);
+                    dropPiece(column, true);
+                } else {
+                    console.log("異なるルームIDのmoveメッセージを無視");
+                }
+            }
+        } catch (error) {
+            console.error("メッセージ処理中にエラー:", error);
+        }
+    };
+    
+    return socket;
+}
 
 // 駒を落とす関数
 export function dropPiece(col, isOpponentMove = false) {
     if (gameState.winner) 
         return; // 勝者が決まっている場合は処理を終了
 
-    // 自分の手番でない場合は処理を終了（相手の手の場合を除く）
-    if (!isOpponentMove && !gameState.isMyTurn) {
-        console.log("相手のターンです");
-        return;
+    // オンラインモードの場合のみ手番チェックを行う
+    if (gameState.mode === "play-in-online") {
+        if (!isOpponentMove && !gameState.isMyTurn) {
+            console.log("相手のターンです");
+            return;
+        }
     }
 
     console.log("駒を落とす処理開始:", col);
@@ -56,14 +132,16 @@ export function dropPiece(col, isOpponentMove = false) {
         gameState.setMyTurn(false); // 自分のターンを終了
         updateTurn(gameState.currentPlayer);
         
-        // サーバーに動きを送信（ルームIDも含める）
-        const message = { 
-            type: "move", 
-            move: { col }, 
-            roomId: gameState.currentRoomId 
-        };
-        console.log("送信するメッセージ:", message);
-        socket.send(JSON.stringify(message));
+        // サーバーに動きを送信
+        if (!isOpponentMove && socket && socket.readyState === WebSocket.OPEN) {
+            const message = { 
+                type: "move", 
+                move: { col }, 
+                roomId: gameState.currentRoomId 
+            };
+            console.log("送信するメッセージ:", message);
+            socket.send(JSON.stringify(message));
+        }
     } else {
         // 相手の手番の場合
         gameState.switchPlayer();
@@ -188,67 +266,14 @@ export function checkWinner(row, col, lastPlayer) {
     return false; // 4つ並んでいない
 }
 
-// サーバーからのメッセージを処理
-socket.onmessage = (event) => {
-    console.log("受信したメッセージ:", event.data);
-    const data = JSON.parse(event.data);
-    
-    if (data.type === "roomCreated") {
-        console.log("ルーム作成成功！ID:", data.roomId);
-        gameState.setCurrentRoomId(data.roomId);
-        // ターンインジケーターを非表示
-        document.getElementById("turnIndicator").style.display = "none";
-    } else if (data.type === "gameStart") {
-        console.log("対戦相手が見つかりました！ゲーム開始");
-        gameState.setCurrentRoomId(data.roomId);
-        
-        // 先手後手の設定
-        gameState.setMyTurn(data.isFirstMove);
-        
-        startGame(data.roomId, data.isFirstMove);
-        // ターンインジケーターを表示
-        document.getElementById("turnIndicator").style.display = "block";
-    } else if (data.type === "move") {
-        console.log("moveのメッセージを受け取りました");
-        console.log("受信したルームID:", data.roomId);
-        console.log("現在のルームID:", gameState.currentRoomId);
-        // 自分のルームのメッセージかどうかを確認
-        if (data.roomId === gameState.currentRoomId) {
-            console.log("ルームIDが一致しました");
-            console.log("相手の手:", data.move);
-            const column = parseInt(data.move.col);
-            dropPiece(column, true);
-        } else {
-            console.log("ルームIDが一致しません");
-        }
-    }
-};
-
-// ゲーム開始処理
-function startGame(roomId, isFirstMove) {
-    const gameStatus = document.getElementById("gameStatus");
-    gameStatus.textContent = `ゲームが開始されました！${isFirstMove ? '（先手）' : '（後手）'}`;
-    gameStatus.style.display = "block";
-
-    resetBoard();
-    gameState.resetCurrentPlayer();
-    updateTurn(gameState.currentPlayer);
-}
-
 // モード選択画面の表示
 export function showModeSelection() {
     const modeSelection = document.getElementById('mode-selection');
     modeSelection.style.display = 'flex';
 
     document.getElementById('online-mode').addEventListener('click', () => {
-        resetBoard();
-        gameState.resetCurrentPlayer();
-        gameState.resetModePlayInOnline();
-        socket.send(JSON.stringify({ type: "findMatch" }));
         modeSelection.style.display = 'none';
-        const gameStatus = document.getElementById("gameStatus");
-        gameStatus.textContent = `対戦相手を待っています...`;
-        gameStatus.style.display = "block";
+        showAuthForm();
     });
 
     // プレイヤー対プレイヤーのモード
