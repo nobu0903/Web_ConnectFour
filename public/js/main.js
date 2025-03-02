@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // クライアントサイドのWebSocket接続
-const socket = new WebSocket('ws://localhost:3000');
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsHost = window.location.host;
+const socket = new WebSocket(`${wsProtocol}//${wsHost}`);
 
 socket.onmessage = function(event) {
     const data = JSON.parse(event.data);

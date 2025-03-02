@@ -3,7 +3,9 @@ import { isColumnFull, resetBoard } from "./board.js";
 import { smartComputerTurn } from "./computer.js";
 
 // WebSocketの接続を確立
-const socket = new WebSocket('ws://localhost:3000');
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsHost = window.location.host;
+const socket = new WebSocket(`${wsProtocol}//${wsHost}`);
 
 // 駒を落とす関数
 export function dropPiece(col, isOpponentMove = false) {
