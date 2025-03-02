@@ -3,12 +3,18 @@ import { isColumnFull, resetBoard } from "./board.js";
 import { smartComputerTurn } from "./computer.js";
 
 // WebSocketの接続を確立
-const socket = new WebSocket('ws://localhost:3000'); // サーバーのURL
+const socket = new WebSocket('ws://localhost:3000');
 
 // 駒を落とす関数
 export function dropPiece(col, isOpponentMove = false) {
     if (gameState.winner) 
         return; // 勝者が決まっている場合は処理を終了
+
+    // 自分の手番でない場合は処理を終了（相手の手の場合を除く）
+    if (!isOpponentMove && !gameState.isMyTurn) {
+        console.log("相手のターンです");
+        return;
+    }
 
     console.log("駒を落とす処理開始:", col);
     console.log("現在のプレイヤー:", gameState.currentPlayer);
@@ -45,13 +51,21 @@ export function dropPiece(col, isOpponentMove = false) {
     if (!isOpponentMove) {
         // 自分の手番の場合
         gameState.switchPlayer();
+        gameState.setMyTurn(false); // 自分のターンを終了
         updateTurn(gameState.currentPlayer);
         
-        // サーバーに動きを送信
-        socket.send(JSON.stringify({ type: "move", move: { col } }));
+        // サーバーに動きを送信（ルームIDも含める）
+        const message = { 
+            type: "move", 
+            move: { col }, 
+            roomId: gameState.currentRoomId 
+        };
+        console.log("送信するメッセージ:", message);
+        socket.send(JSON.stringify(message));
     } else {
         // 相手の手番の場合
         gameState.switchPlayer();
+        gameState.setMyTurn(true); // 自分のターンを開始
         updateTurn(gameState.currentPlayer);
     }
     
@@ -174,52 +188,65 @@ export function checkWinner(row, col, lastPlayer) {
 
 // サーバーからのメッセージを処理
 socket.onmessage = (event) => {
-    console.log("受信したメッセージ:", event.data); // 受信したメッセージをログに出力
+    console.log("受信したメッセージ:", event.data);
     const data = JSON.parse(event.data);
     
     if (data.type === "roomCreated") {
         console.log("ルーム作成成功！ID:", data.roomId);
+        gameState.setCurrentRoomId(data.roomId);
+        // ターンインジケーターを非表示
+        document.getElementById("turnIndicator").style.display = "none";
     } else if (data.type === "gameStart") {
         console.log("対戦相手が見つかりました！ゲーム開始");
-        startGame(data.roomId); // ゲーム開始処理を呼び出す
+        gameState.setCurrentRoomId(data.roomId);
+        
+        // 先手後手の設定
+        gameState.setMyTurn(data.isFirstMove);
+        
+        startGame(data.roomId, data.isFirstMove);
+        // ターンインジケーターを表示
+        document.getElementById("turnIndicator").style.display = "block";
     } else if (data.type === "move") {
-        console.log("相手の手:", data.move);
-        const column = parseInt(data.move.col); // 文字列を数値に変換
-        dropPiece(column, true); // 相手の動きとして直接dropPieceを呼び出す
+        console.log("moveのメッセージを受け取りました");
+        console.log("受信したルームID:", data.roomId);
+        console.log("現在のルームID:", gameState.currentRoomId);
+        // 自分のルームのメッセージかどうかを確認
+        if (data.roomId === gameState.currentRoomId) {
+            console.log("ルームIDが一致しました");
+            console.log("相手の手:", data.move);
+            const column = parseInt(data.move.col);
+            dropPiece(column, true);
+        } else {
+            console.log("ルームIDが一致しません");
+        }
     }
 };
 
-
-
 // ゲーム開始処理
-function startGame(roomId) {
-    // ゲーム開始のUI更新
+function startGame(roomId, isFirstMove) {
     const gameStatus = document.getElementById("gameStatus");
-    gameStatus.textContent = `ゲームが開始されました！ルームID: ${roomId}`;
+    gameStatus.textContent = `ゲームが開始されました！${isFirstMove ? '（先手）' : '（後手）'}`;
     gameStatus.style.display = "block";
 
-    // 必要に応じて、他の初期化処理を追加
-    resetBoard(); // 盤面をリセット
+    resetBoard();
     gameState.resetCurrentPlayer();
     updateTurn(gameState.currentPlayer);
 }
 
-//main.js
 // モード選択画面の表示
 export function showModeSelection() {
     const modeSelection = document.getElementById('mode-selection');
     modeSelection.style.display = 'flex';
 
-    // online match
     document.getElementById('online-mode').addEventListener('click', () => {
-        resetBoard(); // 盤面をリセット
+        resetBoard();
         gameState.resetCurrentPlayer();
-        gameState.resetModePlayInOnline(); // オンラインモードに設定
-        
-        // 他のプレイヤーとマッチングを試みる
+        gameState.resetModePlayInOnline();
         socket.send(JSON.stringify({ type: "findMatch" }));
-        
         modeSelection.style.display = 'none';
+        const gameStatus = document.getElementById("gameStatus");
+        gameStatus.textContent = `対戦相手を待っています...`;
+        gameStatus.style.display = "block";
     });
 
     // プレイヤー対プレイヤーのモード
@@ -261,18 +288,29 @@ export function showModeSelection() {
 export function updateTurn(player) {
     let turnIndicator = document.getElementById("turnIndicator");
     
-
-    if (player === "red") {
-        turnIndicator.textContent = "red Turn";
-        turnIndicator.style.color = "red";
-    } else if (player === "yellow") {
-        turnIndicator.textContent = "yellow Turn";
-        turnIndicator.style.color = "yellow";
-    } 
+    if (gameState.mode === "play-in-online") {
+        // オンラインモードの場合
+        if (gameState.isMyTurn) {
+            turnIndicator.textContent = "あなたのターンです";
+            turnIndicator.style.color = gameState.currentPlayer;
+        } else {
+            turnIndicator.textContent = "相手のターンです";
+            turnIndicator.style.color = gameState.currentPlayer;
+        }
+    } else {
+        // その他のモードの場合は既存の表示を使用
+        if (player === "red") {
+            turnIndicator.textContent = "red Turn";
+            turnIndicator.style.color = "red";
+        } else if (player === "yellow") {
+            turnIndicator.textContent = "yellow Turn";
+            turnIndicator.style.color = "yellow";
+        }
+    }
     
-    // 勝者が決まった場合の処理を追加
-    if (gameState.winner) { // 勝者の判定にlastPlayerを使用
-        turnIndicator.textContent = `${gameState.winner} wins!`; // 勝者の名前を表示
+    // 勝者が決まった場合の処理
+    if (gameState.winner) {
+        turnIndicator.textContent = `${gameState.winner} wins!`;
         turnIndicator.style.color = "white";
     }
 }
@@ -288,4 +326,19 @@ function joinRoom(roomId) {
 function sendMove(move) {
     socket.send(JSON.stringify({ type: "move", move }));
 }
+
+// 各列のボタンにクリックイベントを追加する関数
+export function initializeColumnButtons() {
+    const columnButtons = document.querySelectorAll('.column-button');
+    columnButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            if (gameState.winner) return;
+            const col = button.dataset.col;
+            dropPiece(col);
+        });
+    });
+}
+
+// 初期化関数を呼び出し
+initializeColumnButtons();
     

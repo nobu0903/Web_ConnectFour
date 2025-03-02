@@ -45,21 +45,44 @@ wss.on("connection", (ws) => {
 
                 console.log(`マッチング成功: ルームID ${roomId}`);
 
-                // 両プレイヤーにゲーム開始を通知
-                player1.send(JSON.stringify({ type: "gameStart", roomId }));
-                player2.send(JSON.stringify({ type: "gameStart", roomId }));
+                // ランダムに先手を決定（0または1）
+                const firstPlayerIndex = Math.floor(Math.random() * 2);
+                const [firstPlayer, secondPlayer] = firstPlayerIndex === 0 ? [player1, player2] : [player2, player1];
+
+                console.log(`先手プレイヤーが決定されました`);
+
+                // 両プレイヤーにゲーム開始を通知（プレイヤー番号とともに先手情報も送信）
+                firstPlayer.send(JSON.stringify({ 
+                    type: "gameStart", 
+                    roomId, 
+                    playerNumber: 1,
+                    isFirstMove: true
+                }));
+                secondPlayer.send(JSON.stringify({ 
+                    type: "gameStart", 
+                    roomId, 
+                    playerNumber: 2,
+                    isFirstMove: false
+                }));
             }
         }
 
         if (data.type === 'move') {
+            const roomId = data.roomId;
+            console.log('動きが受信されました:', data.move, 'ルームID:', roomId);
             
-            // すべてのクライアントに動きをブロードキャスト
-            wss.clients.forEach((client) => {
-                if (client !== ws && client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify({ type: 'move', move: data.move }));
-                    console.log('動きが受信されました:', data.move);
-                }
-            });
+            // 同じルームのクライアントにのみ動きを送信
+            if (rooms[roomId]) {
+                rooms[roomId].forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                            type: 'move',
+                            move: data.move,
+                            roomId: roomId
+                        }));
+                    }
+                });
+            }
         }
     });
 
