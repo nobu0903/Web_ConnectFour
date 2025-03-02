@@ -47,6 +47,18 @@
         <h2>Let's play Connect Four</h2>
         <h2 id="gameStatus" style="display: none;"></h2>
 
+        <!-- レーティング表示エリアを追加 -->
+        <div id="rating-display" class="rating-display" style="display: none;">
+            <div class="player-rating">
+                <span id="player1-name"></span>
+                <span id="player1-rating"></span>
+            </div>
+            <div class="vs">VS</div>
+            <div class="player-rating">
+                <span id="player2-name"></span>
+                <span id="player2-rating"></span>
+            </div>
+        </div>
 
         <div id="game-container">
             <div id="button-container">
@@ -62,9 +74,24 @@
             <div id="board"></div> <!-- ここにボードが生成される -->
             <!-- index.html または home.html -->
             <div id="turnIndicator" class="turn-indicator">Your Turn</div>
-
         </div>
             <div id="winner-message" style="display: none;"></div>
+            
+            <!-- 対戦結果表示エリア -->
+            <div id="game-result" class="game-result" style="display: none;">
+                <h3>対戦結果</h3>
+                <div class="result-content">
+                    <div class="player-result">
+                        <span id="result-player1-name"></span>
+                        <span id="result-player1-rating-change"></span>
+                    </div>
+                    <div class="player-result">
+                        <span id="result-player2-name"></span>
+                        <span id="result-player2-rating-change"></span>
+                    </div>
+                </div>
+            </div>
+
             <div class="next-button" id="next-button">
                 <img src="../images/next-icon.jpg" alt="next Icon" class="next-icon">
                 <span>Next</span>

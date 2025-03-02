@@ -55,6 +55,32 @@ export function initializeWebSocket(token = null) {
                 // 先手後手の設定
                 gameState.setMyTurn(data.isFirstMove);
                 console.log("自分のターン:", data.isFirstMove);
+
+                // レーティング表示を更新
+                const ratingDisplay = document.getElementById("rating-display");
+                const player1Name = document.getElementById("player1-name");
+                const player1Rating = document.getElementById("player1-rating");
+                const player2Name = document.getElementById("player2-name");
+                const player2Rating = document.getElementById("player2-rating");
+
+                // レーティング情報のデフォルト値を設定
+                const myRating = data.rating || 1500;
+                const opponentRating = data.opponentRating || 1500;
+
+                console.log("レーティング情報:", { myRating, opponentRating });
+
+                if (data.isFirstMove) {
+                    player1Name.textContent = "あなた";
+                    player1Rating.textContent = `Rating: ${myRating}`;
+                    player2Name.textContent = "対戦相手";
+                    player2Rating.textContent = `Rating: ${opponentRating}`;
+                } else {
+                    player1Name.textContent = "対戦相手";
+                    player1Rating.textContent = `Rating: ${opponentRating}`;
+                    player2Name.textContent = "あなた";
+                    player2Rating.textContent = `Rating: ${myRating}`;
+                }
+                ratingDisplay.style.display = "flex";
                 
                 const gameStatus = document.getElementById("gameStatus");
                 gameStatus.textContent = `ゲームが開始されました！${data.isFirstMove ? '（先手）' : '（後手）'}`;
@@ -72,6 +98,81 @@ export function initializeWebSocket(token = null) {
                 } else {
                     console.log("異なるルームIDのmoveメッセージを無視");
                 }
+            } else if (data.type === "gameEnd") {
+                console.log("ゲーム終了メッセージを受信:", data);
+                
+                // 結果表示エリアの要素を取得
+                const gameResult = document.getElementById("game-result");
+                const resultPlayer1Name = document.getElementById("result-player1-name");
+                const resultPlayer1Rating = document.getElementById("result-player1-rating-change");
+                const resultPlayer2Name = document.getElementById("result-player2-name");
+                const resultPlayer2Rating = document.getElementById("result-player2-rating-change");
+
+                // 引き分けの場合
+                if (data.isDraw) {
+                    document.querySelector('.game-result h3').textContent = '引き分け';
+                } else {
+                    document.querySelector('.game-result h3').textContent = `${data.winner === gameState.currentPlayer ? 'あなた' : '相手'}の勝利！`;
+                }
+
+                // プレイヤー情報を設定
+                if (data.isFirstMove) {
+                    resultPlayer1Name.textContent = "あなた";
+                    resultPlayer2Name.textContent = "対戦相手";
+                    
+                    // レーティング変動を表示
+                    const myRatingChange = data.myNewRating - data.myOldRating;
+                    const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
+                    
+                    resultPlayer1Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
+                    
+                    // レーティング変動に応じてクラスを追加
+                    resultPlayer1Rating.className = myRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.className = opponentRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                } else {
+                    resultPlayer1Name.textContent = "対戦相手";
+                    resultPlayer2Name.textContent = "あなた";
+                    
+                    // レーティング変動を表示
+                    const myRatingChange = data.myNewRating - data.myOldRating;
+                    const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
+                    
+                    resultPlayer1Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    
+                    // レーティング変動に応じてクラスを追加
+                    resultPlayer1Rating.className = opponentRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.className = myRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                }
+
+                // 結果表示エリアを表示
+                gameResult.style.display = "block";
+            } else if (data.type === "gameResult") {
+                console.log("ゲーム結果メッセージを受信:", data);
+                
+                // 結果表示エリアの要素を取得
+                const gameResult = document.getElementById("game-result");
+                const resultPlayer1Name = document.getElementById("result-player1-name");
+                const resultPlayer1Rating = document.getElementById("result-player1-rating-change");
+                const resultPlayer2Name = document.getElementById("result-player2-name");
+                const resultPlayer2Rating = document.getElementById("result-player2-rating-change");
+
+                // 勝敗の表示を設定
+                if (gameState.winner) {
+                    document.querySelector('.game-result h3').textContent = 
+                        gameState.winner === gameState.currentPlayer ? 'あなたの勝利！' : '相手の勝利！';
+                } else {
+                    document.querySelector('.game-result h3').textContent = '引き分け';
+                }
+
+                // プレイヤー情報を設定
+                resultPlayer1Name.textContent = "あなた";
+                resultPlayer1Rating.textContent = `${data.newRating} (${data.ratingChange >= 0 ? '+' : ''}${data.ratingChange})`;
+                resultPlayer1Rating.className = data.ratingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+
+                // 結果表示エリアを表示
+                gameResult.style.display = "block";
             }
         } catch (error) {
             console.error("メッセージ処理中にエラー:", error);
@@ -120,6 +221,17 @@ export function dropPiece(col, isOpponentMove = false) {
             if (checkWinner(row, col, lastPlayer)) {
                 gameState.setWinner(gameState.currentPlayer);
                 console.log(`${lastPlayer} win!!`);
+                
+                // オンラインモードの場合、サーバーにゲーム終了を通知
+                if (gameState.mode === "play-in-online" && socket && socket.readyState === WebSocket.OPEN) {
+                    const message = {
+                        type: "gameEnd",
+                        roomId: gameState.currentRoomId,
+                        winner: lastPlayer
+                    };
+                    console.log("ゲーム終了メッセージを送信:", message);
+                    socket.send(JSON.stringify(message));
+                }
             }
             break;
         }
@@ -141,6 +253,26 @@ export function dropPiece(col, isOpponentMove = false) {
             };
             console.log("送信するメッセージ:", message);
             socket.send(JSON.stringify(message));
+            
+            // 引き分けチェック
+            let isBoardFull = true;
+            for (let c = 0; c < 7; c++) {
+                if (!isColumnFull(c)) {
+                    isBoardFull = false;
+                    break;
+                }
+            }
+            
+            // 盤面が埋まっていて勝者がいない場合は引き分け
+            if (isBoardFull && !gameState.winner && gameState.mode === "play-in-online") {
+                const message = {
+                    type: "gameEnd",
+                    roomId: gameState.currentRoomId,
+                    isDraw: true
+                };
+                console.log("引き分けメッセージを送信:", message);
+                socket.send(JSON.stringify(message));
+            }
         }
     } else {
         // 相手の手番の場合

@@ -13,3 +13,91 @@ body {
 h2 {
     color: green;
 }
+
+.rating-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    color: white;
+    max-width: 600px;
+}
+
+.player-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px;
+}
+
+.player-rating span {
+    margin: 5px 0;
+}
+
+.vs {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0 20px;
+    color: #ffd700;
+}
+
+#player1-rating, #player2-rating {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+#player1-name, #player2-name {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.game-result {
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
+    color: white;
+    text-align: center;
+}
+
+.game-result h3 {
+    color: #ffd700;
+    margin-bottom: 15px;
+}
+
+.result-content {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+}
+
+.player-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+}
+
+.player-result span {
+    margin: 5px 0;
+}
+
+#result-player1-rating-change,
+#result-player2-rating-change {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.rating-increase {
+    color: #4CAF50;
+}
+
+.rating-decrease {
+    color: #f44336;
+}
