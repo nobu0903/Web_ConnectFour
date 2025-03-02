@@ -9,7 +9,7 @@ let socket = null;
 // WebSocket接続を確立する関数
 export function initializeWebSocket(token = null) {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.host;
+    const wsHost = window.location.hostname;
     const wsUrl = token 
         ? `${wsProtocol}//${wsHost}?token=${token}`
         : `${wsProtocol}//${wsHost}`;

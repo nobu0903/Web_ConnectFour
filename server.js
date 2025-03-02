@@ -6,8 +6,11 @@ import { fileURLToPath } from "url";
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import helmet from 'helmet';
+import cors from 'cors';
 import User from './models/User.js';
 import { calculateNewRatings } from './utils/rating.js';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -18,10 +21,31 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
+// セキュリティ設定
+app.use(helmet());
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://web-connectfour.onrender.com'] 
+        : '*'
+}));
+
+// レート制限の設定
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15分
+    max: 100 // IPアドレスごとのリクエスト数
+});
+app.use('/api/', limiter);
+
 // MongoDBに接続
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.error('MongoDB connection error:', err));
+    .then(() => {
+        console.log('MongoDB接続成功');
+        console.log('接続URL:', process.env.MONGODB_URI.replace(/mongodb\+srv:\/\/([^:]+):([^@]+)@/, 'mongodb+srv://***:***@'));
+    })
+    .catch(err => {
+        console.error('MongoDB接続エラー:', err);
+        console.error('接続URL:', process.env.MONGODB_URI.replace(/mongodb\+srv:\/\/([^:]+):([^@]+)@/, 'mongodb+srv://***:***@'));
+    });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/public')));
@@ -57,21 +81,27 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        console.log('ログイン試行:', { username });
         
         // ユーザーを検索
         const user = await User.findOne({ username });
         if (!user) {
+            console.log('ユーザーが見つかりません:', username);
             return res.status(401).json({ error: 'ユーザー名またはパスワードが間違っています' });
         }
 
         // パスワードを検証
         const isValidPassword = await user.comparePassword(password);
+        console.log('パスワード検証結果:', isValidPassword);
+        
         if (!isValidPassword) {
+            console.log('パスワードが一致しません:', username);
             return res.status(401).json({ error: 'ユーザー名またはパスワードが間違っています' });
         }
 
         // JWTトークンを生成
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+        console.log('ログイン成功:', username);
         res.json({ token });
     } catch (error) {
         console.error('Login error:', error);
