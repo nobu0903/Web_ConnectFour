@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" href="/css/board.css">
+
+</head>
+
+<body>
+    
+    <div id="header-container"></div>
+    <div class="container">
+        <!--画面を開くと最初にモード選択画面が出てくる-->
+        <div id="mode-selection" class="mode-selection">
+            <div class="mode-selection-content">
+                <h2>SELECT MODE</h2>
+                <div class="mode-buttons">
+                    <button id="online-mode">ONLINE MATCH</button>
+                    <button id="pvp-mode">PLAYER vs PLAYER</button>
+                    <button id="pvc-mode">PLAYER vs COMPUTER</button>
+                    <div id="pvc-levels" style="display: none; margin-top: 20px;"> <!-- PVCレベル選択 -->
+                        <button id="pvc-mode-level1">Level 1</button>
+                        <button id="pvc-mode-level2">Level 2</button>
+                        <button id="pvc-mode-level3">Level 3</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <h2>Let's play Connect Four</h2>
+        <h2 id="gameStatus" style="display: none;"></h2>
+
+
+        <div id="game-container">
+            <div id="button-container">
+                <!-- 各列に対応するボタンを作成 -->
+                <button class="column-button" data-col="0">1</button>
+                <button class="column-button" data-col="1">2</button>
+                <button class="column-button" data-col="2">3</button>
+                <button class="column-button" data-col="3">4</button>
+                <button class="column-button" data-col="4">5</button>
+                <button class="column-button" data-col="5">6</button>
+                <button class="column-button" data-col="6">7</button>
+            </div>
+            <div id="board"></div> <!-- ここにボードが生成される -->
+            <!-- index.html または home.html -->
+            <div id="turnIndicator" class="turn-indicator">Your Turn</div>
+
+        </div>
+            <div id="winner-message" style="display: none;"></div>
+            <div class="next-button" id="next-button">
+                <img src="../images/next-icon.jpg" alt="next Icon" class="next-icon">
+                <span>Next</span>
+            </div>
+            
+        </div>
+
+        <div id="footer-container"></div>
+    </div>
+    
+    
+    <script type="module" src="../js/main.js"></script>
+    
+    <script src="../include.js"></script>
+
+</body>
+</html>

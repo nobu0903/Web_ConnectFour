@@ -1,0 +1,88 @@
+/*Main Header*/
+.header {
+    width: 100%;
+    position: relative;
+    background-color:darkorange;
+    display: grid; /* グリッドレイアウトを使用 */
+    
+    grid-template-columns: 1fr 1fr; /* 2つの列を均等に配置 */
+    grid-template-rows: auto; /* 行の高さを自動調整 */
+    padding-top: 10px; /* 上部に10pxのパディングを追加 */
+    grid-template-areas: 
+    "logo button" /* 1行目にロゴとボタンを配置 */
+    "menu menu"; /* 2行目にメニューを2列分配置 */
+    
+}
+
+@media only screen and (min-width: 769px) {
+    .header {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+        "logo menu button" ;}
+    }
+
+
+
+.header__logo {
+    grid-area: logo; /* グリッドエリアの "logo" に配置 */
+    font-weight: 800; 
+    font-size: 25px; 
+    text-decoration: none; /* テキストに下線を追加 */
+}
+
+.header__logo:harver {
+    text-decoration: underline;
+}
+
+.header__nav {
+    grid-area: menu;
+    display: flex;
+    justify-content: center;
+}
+
+.header_button {
+    display: flex;
+    justify-content: end;
+}
+
+/*このCSSセレクタは、.header__buttonクラスを持つ要素内のbutton要素に対してスタイルを適用します。以下に各プロパティの説明を示します。*/
+.header__button button {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+    border: 0;
+    padding: 6px 12px;
+    background: none;
+    border-radius: var(--border-radius);
+    border: 2px solid transparent;
+    font-size: var(--font-size-base);
+    font-weight: 60;
+    color: var(--black);
+}
+
+.header__button button:hover {
+    /* マウスオーバー時のスタイルをここに記述 */
+    border: 2px solid var(--black);
+}
+
+.header__nav ul {
+    list-style-type: none;
+    display: flex;
+    gap: 1rem; /* アイテム間の間隔を1remに設定 grid, flexの時にgapが必要*/
+    font-weight: 600;
+    padding: 0;   
+}
+
+.header__nav ul a {
+    padding: 10px;
+    /*テキストの装飾を取り除くために使用されます。通常、リンク要素（<a>タグ）などに適用して、下線やその他の装飾を削除します。*/
+    text-decoration: none;
+}
+
+.header__nav ul a:hover {
+    text-decoration: underline;
+}
+
+.header__nav ul a.active {
+    color: var(--gray);
+}
