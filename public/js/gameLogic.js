@@ -28,6 +28,7 @@ export function initializeWebSocket(token = null) {
     
     socket.onclose = () => {
         console.log('WebSocket接続が切断されました');
+        gameResult.style.display = "none";
     };
     
     socket.onerror = (error) => {
@@ -500,4 +501,28 @@ export function initializeColumnButtons() {
 
 // 初期化関数を呼び出し
 initializeColumnButtons();
+
+// Nextボタンのイベントリスナーを追加
+document.getElementById('next-button').addEventListener('click', () => {
+    // 結果表示を非表示にする
+    const gameResult = document.getElementById('game-result');
+    if (gameResult) {
+        gameResult.style.display = "none";
+    }
+    
+    // レーティング表示も非表示にする
+    const ratingDisplay = document.getElementById('rating-display');
+    if (ratingDisplay) {
+        ratingDisplay.style.display = "none";
+    }
+    
+    // ゲームステータスも非表示にする
+    const gameStatus = document.getElementById('gameStatus');
+    if (gameStatus) {
+        gameStatus.style.display = "none";
+    }
+    
+    // モード選択画面を表示
+    showModeSelection();
+});
     
