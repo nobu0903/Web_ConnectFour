@@ -13,6 +13,21 @@ async function fetchRankings() {
     }
 }
 
+// ユーザー数を取得する関数
+async function fetchUserCount() {
+    try {
+        const response = await fetch('/api/user-count');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.count;
+    } catch (error) {
+        console.error('ユーザー数取得エラー:', error);
+        return 0;
+    }
+}
+
 // ランキングテーブルを更新する関数
 function updateRankingTable(rankings) {
     const tbody = document.getElementById('ranking-body');
@@ -43,6 +58,9 @@ function updateRankingTable(rankings) {
 // ランキングを表示する関数
 async function showRankings() {
     try {
+        const userCount = await fetchUserCount();
+        console.log('登録ユーザー数:', userCount);
+        
         const rankings = await fetchRankings();
         if (rankings.length === 0) {
             const tbody = document.getElementById('ranking-body');
@@ -50,28 +68,13 @@ async function showRankings() {
             return;
         }
         updateRankingTable(rankings);
-        document.getElementById('ranking-board').style.display = 'block';
     } catch (error) {
         console.error('ランキング表示エラー:', error);
     }
 }
 
-// イベントリスナーの設定
+// ページ読み込み時にランキングを表示
 document.addEventListener('DOMContentLoaded', () => {
-    const showRankingButton = document.getElementById('show-ranking');
-    const closeRankingButton = document.getElementById('close-ranking');
-    
-    if (showRankingButton) {
-        showRankingButton.addEventListener('click', showRankings);
-    }
-    
-    if (closeRankingButton) {
-        closeRankingButton.addEventListener('click', () => {
-            const rankingBoard = document.getElementById('ranking-board');
-            if (rankingBoard) {
-                rankingBoard.style.display = 'none';
-            }
-        });
-    }
+    showRankings();
 });
 

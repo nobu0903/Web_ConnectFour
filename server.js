@@ -206,6 +206,17 @@ app.get('/api/rankings', async (req, res) => {
     }
 });
 
+// ユーザー数取得エンドポイント
+app.get('/api/user-count', async (req, res) => {
+    try {
+        const count = await User.countDocuments();
+        res.json({ count });
+    } catch (error) {
+        console.error('ユーザー数取得エラー:', error);
+        res.status(500).json({ error: 'サーバーエラーが発生しました' });
+    }
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '/public/html/index.html'));
 });
