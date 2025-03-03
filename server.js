@@ -314,16 +314,26 @@ wss.on("connection", async (ws, req) => {
                     const player1 = await User.findById(room.userIds[0]);
                     const player2 = await User.findById(room.userIds[1]);
                     
-                    const ratings = calculateNewRatings(player1.rating, player2.rating, data.result);
+                    let result;
+                    if (data.isDraw) {
+                        result = 'draw';
+                    } else {
+                        // 勝者がplayer1かどうかを判定
+                        const isPlayer1Winner = room.players[0].userId.toString() === ws.userId.toString() && data.winner === 'red' ||
+                                             room.players[1].userId.toString() === ws.userId.toString() && data.winner === 'yellow';
+                        result = isPlayer1Winner ? 'win' : 'loss';
+                    }
+                    
+                    const ratings = calculateNewRatings(player1.rating, player2.rating, result);
                     
                     // レーティングと戦績を更新
                     player1.rating = ratings.player1NewRating;
                     player2.rating = ratings.player2NewRating;
                     
-                    if (data.result === 'win') {
+                    if (result === 'win') {
                         player1.wins += 1;
                         player2.losses += 1;
-                    } else if (data.result === 'loss') {
+                    } else if (result === 'loss') {
                         player1.losses += 1;
                         player2.wins += 1;
                     } else {
@@ -339,7 +349,8 @@ wss.on("connection", async (ws, req) => {
                         player.send(JSON.stringify({
                             type: 'gameResult',
                             newRating: index === 0 ? ratings.player1NewRating : ratings.player2NewRating,
-                            ratingChange: index === 0 ? ratings.ratingChange1 : ratings.ratingChange2
+                            ratingChange: index === 0 ? ratings.player1NewRating - player1.rating : ratings.player2NewRating - player2.rating,
+                            result: index === 0 ? result : (result === 'win' ? 'loss' : result === 'loss' ? 'win' : 'draw')
                         }));
                     });
                     

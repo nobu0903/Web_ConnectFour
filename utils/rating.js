@@ -2,7 +2,7 @@
 export function calculateNewRatings(player1Rating, player2Rating, result) {
     const K = 32; // レーティング変動の係数
     const expectedScore1 = 1 / (1 + Math.pow(10, (player2Rating - player1Rating) / 400));
-    const expectedScore2 = 1 / (1 + Math.pow(10, (player1Rating - player2Rating) / 400));
+    const expectedScore2 = 1 - expectedScore1;
 
     let actualScore1, actualScore2;
     
@@ -22,8 +22,6 @@ export function calculateNewRatings(player1Rating, player2Rating, result) {
 
     return {
         player1NewRating: newRating1,
-        player2NewRating: newRating2,
-        ratingChange1: newRating1 - player1Rating,
-        ratingChange2: newRating2 - player2Rating
+        player2NewRating: newRating2
     };
 } 
