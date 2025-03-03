@@ -86,7 +86,7 @@ export function initializeWebSocket(token = null) {
                 ratingDisplay.style.display = "flex";
                 
                 const gameStatus = document.getElementById("gameStatus");
-                gameStatus.textContent = `Game start!${data.isFirstMove ? '（First）' : '（Second）'}`;
+                gameStatus.textContent = `Game start!${data.isFirstMove ? '（First Move）' : '（Second Move）'}`;
                 gameStatus.style.display = "block";
                 
                 // ターンインジケーターを表示
