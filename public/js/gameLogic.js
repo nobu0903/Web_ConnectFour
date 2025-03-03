@@ -86,7 +86,7 @@ export function initializeWebSocket(token = null) {
                 ratingDisplay.style.display = "flex";
                 
                 const gameStatus = document.getElementById("gameStatus");
-                gameStatus.textContent = `ゲームが開始されました！${data.isFirstMove ? '（先手）' : '（後手）'}`;
+                gameStatus.textContent = `Game start!${data.isFirstMove ? '（First）' : '（Second）'}`;
                 gameStatus.style.display = "block";
                 
                 // ターンインジケーターを表示
