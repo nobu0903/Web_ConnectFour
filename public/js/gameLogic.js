@@ -112,7 +112,9 @@ export function initializeWebSocket(token = null) {
                 if (data.isDraw) {
                     document.querySelector('.game-result h3').textContent = '引き分け';
                 } else {
-                    document.querySelector('.game-result h3').textContent = `${data.winner === gameState.currentPlayer ? 'あなた' : '相手'}の勝利！`;
+                    // winnerとfirstPlayerIndexを比較して勝敗を判定
+                    const isWinnerFirstPlayer = (data.winner === 'red' && data.isFirstMove) || (data.winner === 'yellow' && !data.isFirstMove);
+                    document.querySelector('.game-result h3').textContent = isWinnerFirstPlayer ? 'あなたの勝利！' : '相手の勝利！';
                 }
 
                 // プレイヤー情報を設定
@@ -124,12 +126,12 @@ export function initializeWebSocket(token = null) {
                     const myRatingChange = data.myNewRating - data.myOldRating;
                     const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
                     
-                    resultPlayer1Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
-                    resultPlayer2Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
+                    resultPlayer1Rating.textContent = `${data.myNewRating} (${myRatingChange > 0 ? '+' : ''}${myRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange > 0 ? '+' : ''}${opponentRatingChange})`;
                     
                     // レーティング変動に応じてクラスを追加
-                    resultPlayer1Rating.className = myRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
-                    resultPlayer2Rating.className = opponentRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer1Rating.className = myRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.className = opponentRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
                 } else {
                     resultPlayer1Name.textContent = "対戦相手";
                     resultPlayer2Name.textContent = "あなた";
@@ -138,12 +140,12 @@ export function initializeWebSocket(token = null) {
                     const myRatingChange = data.myNewRating - data.myOldRating;
                     const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
                     
-                    resultPlayer1Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
-                    resultPlayer2Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    resultPlayer1Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.myNewRating} (${myRatingChange})`;
                     
                     // レーティング変動に応じてクラスを追加
-                    resultPlayer1Rating.className = opponentRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
-                    resultPlayer2Rating.className = myRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer1Rating.className = opponentRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.className = myRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
                 }
 
                 // 結果表示エリアを表示
@@ -151,8 +153,14 @@ export function initializeWebSocket(token = null) {
             } else if (data.type === "gameResult") {
                 console.log("ゲーム結果メッセージを受信:", data);
                 
-                // 結果表示エリアの要素を取得
+                // 既に結果が表示されている場合は処理をスキップ
                 const gameResult = document.getElementById("game-result");
+                if (gameResult.style.display === "block") {
+                    console.log("既に結果が表示されているため、このメッセージをスキップします");
+                    return;
+                }
+                
+                // 結果表示エリアの要素を取得
                 const resultPlayer1Name = document.getElementById("result-player1-name");
                 const resultPlayer1Rating = document.getElementById("result-player1-rating-change");
                 const resultPlayer2Name = document.getElementById("result-player2-name");
@@ -190,9 +198,9 @@ export function dropPiece(col, isOpponentMove = false) {
 
     // オンラインモードの場合のみ手番チェックを行う
     if (gameState.mode === "play-in-online") {
-        if (!isOpponentMove && !gameState.isMyTurn) {
-            console.log("相手のターンです");
-            return;
+    if (!isOpponentMove && !gameState.isMyTurn) {
+        console.log("相手のターンです");
+        return;
         }
     }
 
@@ -248,13 +256,13 @@ export function dropPiece(col, isOpponentMove = false) {
         
         // サーバーに動きを送信
         if (!isOpponentMove && socket && socket.readyState === WebSocket.OPEN) {
-            const message = { 
-                type: "move", 
-                move: { col }, 
-                roomId: gameState.currentRoomId 
-            };
-            console.log("送信するメッセージ:", message);
-            socket.send(JSON.stringify(message));
+        const message = { 
+            type: "move", 
+            move: { col }, 
+            roomId: gameState.currentRoomId 
+        };
+        console.log("送信するメッセージ:", message);
+        socket.send(JSON.stringify(message));
             
             // 引き分けチェック
             let isBoardFull = true;
