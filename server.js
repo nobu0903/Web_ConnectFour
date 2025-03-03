@@ -47,6 +47,24 @@ mongoose.connect(process.env.MONGODB_URI)
         console.error('接続URL:', process.env.MONGODB_URI.replace(/mongodb\+srv:\/\/([^:]+):([^@]+)@/, 'mongodb+srv://***:***@'));
     });
 
+// MongoDBの接続監視
+mongoose.connection.on('connected', () => {
+    console.log('Mongoose: 接続完了');
+});
+
+mongoose.connection.on('error', (err) => {
+    console.error('Mongoose: 接続エラー:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('Mongoose: 切断');
+});
+
+process.on('SIGINT', async () => {
+    await mongoose.connection.close();
+    process.exit(0);
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/public')));
 
@@ -87,21 +105,43 @@ app.post('/api/login', async (req, res) => {
             console.log('ユーザー名またはパスワードが未入力');
             return res.status(400).json({ error: 'ユーザー名とパスワードを入力してください' });
         }
+
+        // MongoDBの接続状態を確認
+        if (mongoose.connection.readyState !== 1) {
+            console.error('MongoDB接続エラー: 接続が確立されていません');
+            return res.status(500).json({ error: 'データベース接続エラー' });
+        }
         
         // ユーザーを検索
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username }).catch(err => {
+            console.error('ユーザー検索エラー:', err);
+            return null;
+        });
+
         if (!user) {
             console.log('ユーザーが見つかりません:', username);
             return res.status(401).json({ error: 'ユーザー名またはパスワードが間違っています' });
         }
 
         // パスワードを検証
-        const isValidPassword = await user.comparePassword(password);
-        console.log('パスワード検証結果:', isValidPassword);
+        let isValidPassword;
+        try {
+            isValidPassword = await user.comparePassword(password);
+            console.log('パスワード検証結果:', isValidPassword);
+        } catch (err) {
+            console.error('パスワード検証エラー:', err);
+            return res.status(500).json({ error: 'パスワード検証中にエラーが発生しました' });
+        }
         
         if (!isValidPassword) {
             console.log('パスワードが一致しません:', username);
             return res.status(401).json({ error: 'ユーザー名またはパスワードが間違っています' });
+        }
+
+        // JWT_SECRETの存在確認
+        if (!process.env.JWT_SECRET) {
+            console.error('JWT_SECRET環境変数が設定されていません');
+            return res.status(500).json({ error: 'サーバー設定エラー' });
         }
 
         // JWTトークンを生成
@@ -110,7 +150,10 @@ app.post('/api/login', async (req, res) => {
         res.json({ token });
     } catch (error) {
         console.error('ログインエラーの詳細:', error);
-        res.status(500).json({ error: 'サーバーエラーが発生しました' });
+        res.status(500).json({ 
+            error: 'サーバーエラーが発生しました',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
