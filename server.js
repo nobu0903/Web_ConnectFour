@@ -324,7 +324,10 @@ wss.on("connection", async (ws, req) => {
                         result = isPlayer1Winner ? 'win' : 'loss';
                     }
                     
-                    const ratings = calculateNewRatings(player1.rating, player2.rating, result);
+                    const oldRating1 = player1.rating;
+                    const oldRating2 = player2.rating;
+                    
+                    const ratings = calculateNewRatings(oldRating1, oldRating2, result);
                     
                     // レーティングと戦績を更新
                     player1.rating = ratings.player1NewRating;
@@ -346,11 +349,16 @@ wss.on("connection", async (ws, req) => {
                     
                     // 両プレイヤーに結果を通知
                     room.players.forEach((player, index) => {
+                        const isFirstPlayer = index === 0;
+                        const oldRating = isFirstPlayer ? oldRating1 : oldRating2;
+                        const newRating = isFirstPlayer ? ratings.player1NewRating : ratings.player2NewRating;
+                        
                         player.send(JSON.stringify({
                             type: 'gameResult',
-                            newRating: index === 0 ? ratings.player1NewRating : ratings.player2NewRating,
-                            ratingChange: index === 0 ? ratings.player1NewRating - player1.rating : ratings.player2NewRating - player2.rating,
-                            result: index === 0 ? result : (result === 'win' ? 'loss' : result === 'loss' ? 'win' : 'draw')
+                            oldRating: oldRating,
+                            newRating: newRating,
+                            ratingChange: newRating - oldRating,
+                            result: isFirstPlayer ? result : (result === 'win' ? 'loss' : result === 'loss' ? 'win' : 'draw')
                         }));
                     });
                     

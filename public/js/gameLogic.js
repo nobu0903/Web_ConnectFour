@@ -159,9 +159,10 @@ export function initializeWebSocket(token = null) {
                 const resultPlayer2Rating = document.getElementById("result-player2-rating-change");
 
                 // 勝敗の表示を設定
-                if (gameState.winner) {
-                    document.querySelector('.game-result h3').textContent = 
-                        gameState.winner === gameState.currentPlayer ? 'あなたの勝利！' : '相手の勝利！';
+                if (data.result === 'win') {
+                    document.querySelector('.game-result h3').textContent = 'あなたの勝利！';
+                } else if (data.result === 'loss') {
+                    document.querySelector('.game-result h3').textContent = '相手の勝利！';
                 } else {
                     document.querySelector('.game-result h3').textContent = '引き分け';
                 }
