@@ -22,7 +22,16 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 // セキュリティ設定
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            connectSrc: ["'self'", "ws://localhost:3000", "wss://localhost:3000"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+        },
+    },
+}));
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
@@ -168,13 +177,32 @@ app.post('/api/login', async (req, res) => {
 // ランキング取得エンドポイント
 app.get('/api/rankings', async (req, res) => {
     try {
+        // MongoDBの接続状態を確認
+        if (mongoose.connection.readyState !== 1) {
+            console.error('MongoDB接続エラー: 接続が確立されていません');
+            return res.status(500).json({ error: 'データベース接続エラー' });
+        }
+
         const rankings = await User.find()
             .select('username rating wins losses')
             .sort({ rating: -1 })
-            .limit(100);
+            .limit(100)
+            .catch(err => {
+                console.error('ランキング取得エラー:', err);
+                return null;
+            });
+
+        if (!rankings) {
+            return res.status(500).json({ error: 'ランキングの取得に失敗しました' });
+        }
+
         res.json(rankings);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        console.error('ランキング取得エラー:', error);
+        res.status(500).json({ 
+            error: 'サーバーエラーが発生しました',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 

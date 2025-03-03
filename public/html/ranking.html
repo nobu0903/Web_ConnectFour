@@ -4,8 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/ranking.css">
 </head>
 <body>
-    <h1>I haven't make this file yet.まだこのファイルは未実装です。</h1>   
+    <div id="header-container"></div>
+    <div id="ranking-board" class="ranking-board">
+        <h2>ランキング</h2>
+        <div class="ranking-container">
+            <table id="ranking-table">
+                <thead>
+                    <tr>
+                        <th>順位</th>
+                        <th>ユーザー名</th>
+                        <th>レーティング</th>
+                        <th>勝利</th>
+                        <th>敗北</th>
+                        <th>勝率</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-body">
+                    <!-- ここにランキングデータが動的に追加されます -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="footer-container"></div>
 </body>
 </html>
