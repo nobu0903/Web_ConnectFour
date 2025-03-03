@@ -23,13 +23,13 @@ function updateAuthFormMode() {
     const toggleText = document.getElementById('auth-toggle-text');
     
     if (isLoginMode) {
-        title.textContent = 'ログイン';
-        submitButton.textContent = 'ログイン';
-        toggleText.textContent = 'アカウントをお持ちでない方はこちら';
+        title.textContent = 'LOG IN';
+        submitButton.textContent = 'LOGIN';
+        toggleText.textContent = 'You don\'t have an account? Sign up!';
     } else {
-        title.textContent = 'アカウント作成';
-        submitButton.textContent = '登録';
-        toggleText.textContent = 'すでにアカウントをお持ちの方はこちら';
+        title.textContent = 'SIGN UP';
+        submitButton.textContent = 'REGISTER';
+        toggleText.textContent = 'Already have an account? Log in!';
     }
 }
 
@@ -68,7 +68,7 @@ async function handleAuth(username, password) {
         // WebSocket接続を初期化し、マッチング開始
         const socket = initializeWebSocket(authToken);
         const gameStatus = document.getElementById("gameStatus");
-        gameStatus.textContent = `対戦相手を待っています...`;
+        gameStatus.textContent = `Waiting for opponent...`;
         gameStatus.style.display = "block";
 
         // WebSocket接続が確立されるのを待ってからマッチング要求を送信

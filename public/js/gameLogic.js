@@ -66,18 +66,21 @@ export function initializeWebSocket(token = null) {
 
                 const myRating = data.rating;
                 const opponentRating = data.opponentRating;
+                const myUsername = data.myUsername;
+                const opponentUsername = data.opponentUsername;
 
                 console.log("レーティング情報:", { myRating, opponentRating });
+                console.log("ユーザー情報:", { myUsername, opponentUsername });
 
                 if (data.isFirstMove) {
-                    player1Name.textContent = "あなた";
+                    player1Name.textContent = `あなた (${myUsername})`;
                     player1Rating.textContent = `Rating: ${myRating}`;
-                    player2Name.textContent = "対戦相手";
+                    player2Name.textContent = `対戦相手 (${opponentUsername})`;
                     player2Rating.textContent = `Rating: ${opponentRating}`;
                 } else {
-                    player1Name.textContent = "対戦相手";
+                    player1Name.textContent = `対戦相手 (${opponentUsername})`;
                     player1Rating.textContent = `Rating: ${opponentRating}`;
-                    player2Name.textContent = "あなた";
+                    player2Name.textContent = `あなた (${myUsername})`;
                     player2Rating.textContent = `Rating: ${myRating}`;
                 }
                 ratingDisplay.style.display = "flex";
@@ -110,17 +113,17 @@ export function initializeWebSocket(token = null) {
 
                 // 引き分けの場合
                 if (data.isDraw) {
-                    document.querySelector('.game-result h3').textContent = '引き分け';
+                    document.querySelector('.game-result h3').textContent = 'draw';
                 } else {
                     // winnerとfirstPlayerIndexを比較して勝敗を判定
                     const isWinnerFirstPlayer = (data.winner === 'red' && data.isFirstMove) || (data.winner === 'yellow' && !data.isFirstMove);
-                    document.querySelector('.game-result h3').textContent = isWinnerFirstPlayer ? 'あなたの勝利！' : '相手の勝利！';
+                    document.querySelector('.game-result h3').textContent = isWinnerFirstPlayer ? 'You win!' : 'You lose!';
                 }
 
                 // プレイヤー情報を設定
                 if (data.isFirstMove) {
-                    resultPlayer1Name.textContent = "あなた";
-                    resultPlayer2Name.textContent = "対戦相手";
+                    resultPlayer1Name.textContent = "You";
+                    resultPlayer2Name.textContent = "Opponent";
                     
                     // レーティング変動を表示
                     const myRatingChange = data.myNewRating - data.myOldRating;
@@ -133,8 +136,8 @@ export function initializeWebSocket(token = null) {
                     resultPlayer1Rating.className = myRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
                     resultPlayer2Rating.className = opponentRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
                 } else {
-                    resultPlayer1Name.textContent = "対戦相手";
-                    resultPlayer2Name.textContent = "あなた";
+                    resultPlayer1Name.textContent = "Opponent";
+                    resultPlayer2Name.textContent = "You";
                     
                     // レーティング変動を表示
                     const myRatingChange = data.myNewRating - data.myOldRating;
@@ -168,11 +171,11 @@ export function initializeWebSocket(token = null) {
 
                 // 勝敗の表示を設定
                 if (data.result === 'win') {
-                    document.querySelector('.game-result h3').textContent = 'あなたの勝利！';
+                    document.querySelector('.game-result h3').textContent = 'You win!';
                 } else if (data.result === 'loss') {
-                    document.querySelector('.game-result h3').textContent = '相手の勝利！';
+                    document.querySelector('.game-result h3').textContent = 'You lose!';
                 } else {
-                    document.querySelector('.game-result h3').textContent = '引き分け';
+                    document.querySelector('.game-result h3').textContent = 'Draw';
                 }
 
                 // プレイヤー情報を設定
@@ -461,10 +464,10 @@ export function updateTurn(player) {
     if (gameState.mode === "play-in-online") {
         // オンラインモードの場合
         if (gameState.isMyTurn) {
-            turnIndicator.textContent = "あなたのターンです";
+            turnIndicator.textContent = "Your turn";
             turnIndicator.style.color = gameState.currentPlayer;
         } else {
-            turnIndicator.textContent = "相手のターンです";
+            turnIndicator.textContent = "Opponent turn";
             turnIndicator.style.color = gameState.currentPlayer;
         }
     } else {

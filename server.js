@@ -247,6 +247,7 @@ wss.on("connection", async (ws, req) => {
     console.log("認証成功。ユーザーID:", user._id);
     ws.userId = user._id;
     ws.rating = user.rating;
+    ws.username = user.username;  // ユーザーネームを保存
 
     ws.on("message", async (message) => {
         try {
@@ -258,7 +259,9 @@ wss.on("connection", async (ws, req) => {
                 console.log("- 待機プレイヤー存在:", waitingPlayer !== null);
                 if (waitingPlayer) {
                     console.log("- 待機プレイヤーID:", waitingPlayer.userId);
+                    console.log("- 待機プレイヤーユーザーネーム:", waitingPlayer.username);
                     console.log("- 要求元プレイヤーID:", ws.userId);
+                    console.log("- 要求元プレイヤーユーザーネーム:", ws.username);
                 }
                 
                 if (waitingPlayer === null) {
@@ -295,7 +298,9 @@ wss.on("connection", async (ws, req) => {
                             playerNumber: 1,
                             isFirstMove: true,
                             rating: firstPlayer.rating,
-                            opponentRating: secondPlayer.rating
+                            opponentRating: secondPlayer.rating,
+                            myUsername: firstPlayer.username,
+                            opponentUsername: secondPlayer.username
                         }));
                         console.log("先手プレイヤーにメッセージを送信");
 
@@ -305,7 +310,9 @@ wss.on("connection", async (ws, req) => {
                             playerNumber: 2,
                             isFirstMove: false,
                             rating: secondPlayer.rating,
-                            opponentRating: firstPlayer.rating
+                            opponentRating: firstPlayer.rating,
+                            myUsername: secondPlayer.username,
+                            opponentUsername: firstPlayer.username
                         }));
                         console.log("後手プレイヤーにメッセージを送信");
                     } catch (error) {
