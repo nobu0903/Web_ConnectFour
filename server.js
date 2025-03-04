@@ -83,10 +83,30 @@ process.on('SIGINT', async () => {
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '/public')));
+app.use(express.static(path.join(__dirname, '/public'), {
+    maxAge: '1d', // ブラウザキャッシュの有効期限を1日に設定
+    etag: true, // ETagを有効化
+    lastModified: true, // Last-Modifiedを有効化
+    setHeaders: (res, path) => {
+        // CSS, JS, 画像ファイルに対してキャッシュ制御を設定
+        if (path.endsWith('.css') || path.endsWith('.js') || 
+            path.endsWith('.jpg') || path.endsWith('.png')) {
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // 24時間
+        }
+    }
+}));
 
 let waitingPlayer = null;
 let rooms = {}; // { roomId: { players: [player1, player2], userIds: [userId1, userId2] } }
+
+// ランキングキャッシュ
+let rankingsCache = null;
+let lastCacheTime = 0;
+const CACHE_DURATION = 60 * 1000; // 1分間キャッシュを保持
+
+// 認証キャッシュ
+const authCache = new Map();
+const AUTH_CACHE_DURATION = 30 * 60 * 1000; // 30分
 
 // ユーザー登録エンドポイント
 app.post('/api/register', async (req, res) => {
@@ -177,6 +197,12 @@ app.post('/api/login', async (req, res) => {
 // ランキング取得エンドポイント
 app.get('/api/rankings', async (req, res) => {
     try {
+        // キャッシュが有効な場合はキャッシュを返す
+        const now = Date.now();
+        if (rankingsCache && (now - lastCacheTime) < CACHE_DURATION) {
+            return res.json(rankingsCache);
+        }
+
         // MongoDBの接続状態を確認
         if (mongoose.connection.readyState !== 1) {
             console.error('MongoDB接続エラー: 接続が確立されていません');
@@ -187,6 +213,7 @@ app.get('/api/rankings', async (req, res) => {
             .select('username rating wins losses')
             .sort({ rating: -1 })
             .limit(100)
+            .lean() // MongooseドキュメントをプレーンなJavaScriptオブジェクトに変換
             .catch(err => {
                 console.error('ランキング取得エラー:', err);
                 return null;
@@ -195,6 +222,10 @@ app.get('/api/rankings', async (req, res) => {
         if (!rankings) {
             return res.status(500).json({ error: 'ランキングの取得に失敗しました' });
         }
+
+        // キャッシュを更新
+        rankingsCache = rankings;
+        lastCacheTime = now;
 
         res.json(rankings);
     } catch (error) {
@@ -224,12 +255,38 @@ app.get('/', (req, res) => {
 // WebSocket接続の認証
 async function authenticateConnection(token) {
     try {
+        // キャッシュをチェック
+        const cachedAuth = authCache.get(token);
+        if (cachedAuth && (Date.now() - cachedAuth.timestamp) < AUTH_CACHE_DURATION) {
+            return cachedAuth.user;
+        }
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        return await User.findById(decoded.userId);
+        const user = await User.findById(decoded.userId);
+        
+        if (user) {
+            // キャッシュを更新
+            authCache.set(token, {
+                user: user,
+                timestamp: Date.now()
+            });
+        }
+        
+        return user;
     } catch (error) {
         return null;
     }
 }
+
+// 定期的にキャッシュをクリーンアップ
+setInterval(() => {
+    const now = Date.now();
+    for (const [token, data] of authCache.entries()) {
+        if (now - data.timestamp > AUTH_CACHE_DURATION) {
+            authCache.delete(token);
+        }
+    }
+}, 60 * 60 * 1000); // 1時間ごとにクリーンアップ
 
 wss.on("connection", async (ws, req) => {
     console.log("新しいプレイヤーが接続");
@@ -365,6 +422,9 @@ wss.on("connection", async (ws, req) => {
                     await player1.save();
                     await player2.save();
                     
+                    // ランキングキャッシュをクリア
+                    clearRankingsCache();
+                    
                     // 両プレイヤーに結果を通知
                     room.players.forEach((player, index) => {
                         const isFirstPlayer = index === 0;
@@ -427,6 +487,12 @@ wss.on("connection", async (ws, req) => {
         }
     });
 });
+
+// ゲーム終了時にキャッシュをクリア
+function clearRankingsCache() {
+    rankingsCache = null;
+    lastCacheTime = 0;
+}
 
 const PORT = process.env.PORT || 3000;  // 環境変数 PORT を優先
 server.listen(PORT, () => {

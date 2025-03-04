@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
     },
     rating: {
         type: Number,
-        default: 1500  // 初期レーティング
+        default: 1500,  // 初期レーティング
+        index: true
     },
     wins: {
         type: Number,
