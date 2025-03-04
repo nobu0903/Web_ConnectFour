@@ -42,16 +42,23 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            connectSrc: ["'self'", "ws://localhost:3000", "wss://localhost:3000"],
+            connectSrc: [
+                "'self'",
+                "ws://localhost:3000",
+                "wss://localhost:3000",
+                "ws://web-connectfour.onrender.com",
+                "wss://web-connectfour.onrender.com"
+            ],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
         },
     },
 }));
 app.use(cors({
-    origin: '*',
+    origin: ['http://localhost:3000', 'https://web-connectfour.onrender.com'],
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
 
 // レート制限の設定

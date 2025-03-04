@@ -17,6 +17,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// WebSocket接続URLを環境に応じて決定
+const getWebSocketURL = () => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}`;
+};
+
+// WebSocket接続を確立
+function connectWebSocket(token) {
+    const wsUrl = `${getWebSocketURL()}?token=${token}`;
+    console.log('WebSocket接続を試行:', wsUrl);
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+        console.log('WebSocket接続が確立されました');
+    };
+    
+    ws.onerror = (error) => {
+        console.error('WebSocket接続エラー:', error);
+    };
+    
+    ws.onclose = (event) => {
+        console.log('WebSocket接続が切断されました。コード:', event.code);
+        // 3秒後に再接続を試みる
+        setTimeout(() => {
+            console.log('WebSocket再接続を試みます...');
+            connectWebSocket(token);
+        }, 3000);
+    };
+
+    return ws;
+}
+
 // クライアントサイドのWebSocket接続
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsHost = window.location.host;
