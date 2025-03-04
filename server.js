@@ -244,33 +244,44 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/rankings', async (req, res) => {
     try {
         const queryStartTime = Date.now();
-
-        // キャッシュが有効な場合はキャッシュを返す
-        const now = Date.now();
-        if (rankingsCache && (now - lastCacheTime) < CACHE_DURATION) {
-            console.log(`ランキングキャッシュヒット (${Date.now() - queryStartTime}ms)`);
-            return res.json(rankingsCache);
-        }
+        console.log('ランキング取得リクエストを受信');
 
         // MongoDBの接続状態を確認
         if (mongoose.connection.readyState !== 1) {
             console.error('MongoDB接続エラー: 接続が確立されていません');
-            return res.status(500).json({ error: 'データベース接続エラー' });
+            return res.status(503).json({ 
+                error: 'データベース接続エラー',
+                message: 'サーバーが一時的に利用できません。しばらくしてから再試行してください。'
+            });
+        }
+
+        // キャッシュが有効な場合はキャッシュを返す
+        const now = Date.now();
+        if (rankingsCache && (now - lastCacheTime) < CACHE_DURATION) {
+            const responseTime = Date.now() - queryStartTime;
+            console.log(`ランキングキャッシュヒット (${responseTime}ms)`);
+            return res.json({
+                success: true,
+                data: rankingsCache,
+                fromCache: true
+            });
         }
 
         console.log('ランキングデータをDBから取得中...');
         const rankings = await User.find()
-            .select('username rating wins losses -_id') // _idを除外
-            .sort({ rating: -1, wins: -1 }) // 複合インデックスを使用
+            .select('username rating wins losses -_id')
+            .sort({ rating: -1, wins: -1 })
             .limit(100)
-            .lean() // MongooseドキュメントをプレーンなJavaScriptオブジェクトに変換
-            .catch(err => {
-                console.error('ランキング取得エラー:', err);
-                return null;
-            });
+            .lean()
+            .exec();
 
-        if (!rankings) {
-            return res.status(500).json({ error: 'ランキングの取得に失敗しました' });
+        if (!rankings || rankings.length === 0) {
+            console.log('ランキングデータが空です');
+            return res.json({
+                success: true,
+                data: [],
+                message: 'ランキングデータがまだありません'
+            });
         }
 
         // キャッシュを更新
@@ -281,11 +292,18 @@ app.get('/api/rankings', async (req, res) => {
         console.log(`ランキングデータ取得完了 (${queryEndTime}ms)`);
         console.log(`取得件数: ${rankings.length}`);
 
-        res.json(rankings);
+        res.json({
+            success: true,
+            data: rankings,
+            fromCache: false,
+            count: rankings.length
+        });
+
     } catch (error) {
         console.error('ランキング取得エラー:', error);
         res.status(500).json({ 
-            error: 'サーバーエラーが発生しました',
+            error: 'ランキングの取得に失敗しました',
+            message: 'サーバーエラーが発生しました。しばらくしてから再試行してください。',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }

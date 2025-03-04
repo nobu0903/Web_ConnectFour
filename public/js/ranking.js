@@ -5,11 +5,14 @@ async function fetchRankings() {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const rankings = await response.json();
-        return rankings;
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.error || 'ランキングの取得に失敗しました');
+        }
+        return result.data;
     } catch (error) {
         console.error('ランキング取得エラー:', error);
-        return [];
+        throw error;
     }
 }
 
@@ -35,8 +38,13 @@ function updateRankingTable(rankings) {
         console.error('ランキングテーブルが見つかりません');
         return;
     }
-    tbody.innerHTML = '';
+    
+    if (!rankings || rankings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">ランキングデータがありません</td></tr>';
+        return;
+    }
 
+    tbody.innerHTML = '';
     rankings.forEach((user, index) => {
         const row = document.createElement('tr');
         const totalGames = user.wins + user.losses;
@@ -57,19 +65,34 @@ function updateRankingTable(rankings) {
 
 // ランキングを表示する関数
 async function showRankings() {
+    const loadingElement = document.createElement('div');
+    loadingElement.id = 'ranking-loading';
+    loadingElement.textContent = 'ランキングを読み込み中...';
+    document.body.appendChild(loadingElement);
+
     try {
-        const userCount = await fetchUserCount();
-        console.log('登録ユーザー数:', userCount);
+        const [userCount, rankings] = await Promise.all([
+            fetchUserCount(),
+            fetchRankings()
+        ]);
         
-        const rankings = await fetchRankings();
-        if (rankings.length === 0) {
-            const tbody = document.getElementById('ranking-body');
-            tbody.innerHTML = '<tr><td colspan="6">ランキングデータがありません</td></tr>';
-            return;
-        }
+        console.log('登録ユーザー数:', userCount);
         updateRankingTable(rankings);
+        
     } catch (error) {
         console.error('ランキング表示エラー:', error);
+        const tbody = document.getElementById('ranking-body');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="error-message">
+                ランキングの読み込みに失敗しました。<br>
+                ページを更新してください。
+            </td></tr>`;
+        }
+    } finally {
+        const loadingElement = document.getElementById('ranking-loading');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
     }
 }
 
