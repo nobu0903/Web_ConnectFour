@@ -9,6 +9,14 @@ createBoard();
 document.addEventListener('DOMContentLoaded', () => {
     const board = document.getElementById("board");
     showModeSelection();
+    
+    // ログイン状態の確認
+    const token = localStorage.getItem('token');
+    if (token) {
+        console.log('保存されたトークンでWebSocket接続を試行');
+        onLoginSuccess(token);
+    }
+    
     document.getElementById('next-button').addEventListener('click', () => {
         resetBoard(); // 盤面をリセット
         showModeSelection();
@@ -33,6 +41,8 @@ function connectWebSocket(token) {
     
     ws.onopen = () => {
         console.log('WebSocket接続が確立されました');
+        // 接続成功時にマッチングを開始
+        ws.send(JSON.stringify({ type: "findMatch" }));
     };
     
     ws.onerror = (error) => {
@@ -48,18 +58,45 @@ function connectWebSocket(token) {
         }, 3000);
     };
 
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log('WebSocketメッセージ受信:', data);
+        
+        switch(data.type) {
+            case 'gameStart':
+                console.log('ゲーム開始:', data);
+                // ゲーム開始処理
+                break;
+            case 'move':
+                console.log('手を受信:', data);
+                // 手の処理
+                break;
+            case 'gameResult':
+                console.log('ゲーム結果:', data);
+                // 結果の処理
+                break;
+        }
+    };
+
     return ws;
 }
 
-// クライアントサイドのWebSocket接続
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const wsHost = window.location.host;
-const socket = new WebSocket(`${wsProtocol}//${wsHost}`);
+// グローバルなWebSocket接続を保持
+let globalSocket = null;
 
-socket.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    // サーバーからのデータを処理
-};
+// ログイン成功時にWebSocket接続を確立
+function initializeWebSocket(token) {
+    if (globalSocket) {
+        globalSocket.close();
+    }
+    globalSocket = connectWebSocket(token);
+}
+
+// ログイン成功時に呼び出される関数
+function onLoginSuccess(token) {
+    console.log('ログイン成功、WebSocket接続を開始');
+    initializeWebSocket(token);
+}
 
 
 
