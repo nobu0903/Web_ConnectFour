@@ -19,7 +19,23 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ 
+    server,
+    perMessageDeflate: {
+        zlibDeflateOptions: {
+            level: 6,  // 圧縮レベル（1-9）、6は速度とサイズのバランス
+            memLevel: 8
+        },
+        clientTracking: true,
+        clientNoContextTakeover: true,
+        serverNoContextTakeover: true,
+        threshold: 1024 // 1KB以上のメッセージのみ圧縮
+    },
+    maxPayload: 50 * 1024 // 最大ペイロードサイズを50KBに制限
+});
+
+// プロキシの信頼設定
+app.set('trust proxy', 1);
 
 // セキュリティ設定
 app.use(helmet({
@@ -41,7 +57,14 @@ app.use(cors({
 // レート制限の設定
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15分
-    max: 100 // IPアドレスごとのリクエスト数
+    max: 100, // IPアドレスごとのリクエスト数
+    standardHeaders: true, // `RateLimit-*`ヘッダーを含める
+    legacyHeaders: false, // `X-RateLimit-*`ヘッダーを無効化
+    handler: (req, res) => {
+        res.status(429).json({
+            error: 'リクエスト制限を超過しました。しばらく待ってから再試行してください。'
+        });
+    }
 });
 app.use('/api/', limiter);
 
@@ -95,20 +118,28 @@ process.on('SIGINT', async () => {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/public'), {
-    maxAge: '1d', // ブラウザキャッシュの有効期限を1日に設定
-    etag: true, // ETagを有効化
-    lastModified: true, // Last-Modifiedを有効化
+    maxAge: '1d',
+    etag: true,
+    lastModified: true,
     setHeaders: (res, path) => {
+        const cacheControl = 'public, max-age=86400, immutable';
         if (path.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.setHeader('Cache-Control', cacheControl);
+            res.setHeader('X-Content-Type-Options', 'nosniff');
         } else if (path.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
-            res.setHeader('Cache-Control', 'public, max-age=86400');
-        } else if (path.match(/\.(jpg|jpeg|png|gif)$/)) {
-            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.setHeader('Cache-Control', cacheControl);
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+        } else if (path.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+            res.setHeader('Cache-Control', cacheControl);
+            res.setHeader('X-Content-Type-Options', 'nosniff');
         }
-    }
+    },
+    immutable: true,
+    cacheControl: true,
+    dotfiles: 'ignore',
+    index: false
 }));
 
 let waitingPlayer = null;
@@ -311,9 +342,50 @@ setInterval(() => {
     }
 }, 60 * 60 * 1000); // 1時間ごとにクリーンアップ
 
-wss.on("connection", async (ws, req) => {
-    console.log("新しいプレイヤーが接続");
-    
+// パフォーマンスモニタリング
+let lastPingTime = new Map();
+wss.on('connection', async (ws, req) => {
+    // 接続時のタイムスタンプを記録
+    const connectionStartTime = Date.now();
+    console.log(`新しい接続を受信 (${connectionStartTime})`);
+
+    // Pingインターバルの設定
+    const pingInterval = setInterval(() => {
+        if (ws.readyState === ws.OPEN) {
+            const start = Date.now();
+            lastPingTime.set(ws, start);
+            ws.ping();
+        }
+    }, 30000); // 30秒ごとにping
+
+    ws.on('pong', () => {
+        const latency = Date.now() - lastPingTime.get(ws);
+        console.log(`WebSocket接続レイテンシ: ${latency}ms`);
+    });
+
+    ws.on('close', () => {
+        clearInterval(pingInterval);
+        lastPingTime.delete(ws);
+        console.log("プレイヤーが切断。プレイヤーID:", ws.userId);
+        if (waitingPlayer === ws) {
+            console.log("待機プレイヤーが切断したため、待機キューをリセット");
+            waitingPlayer = null;
+        }
+        // 部屋からプレイヤーを削除
+        for (const roomId in rooms) {
+            const room = rooms[roomId];
+            const wasInRoom = room.players.includes(ws);
+            room.players = room.players.filter(player => player !== ws);
+            if (wasInRoom) {
+                console.log(`プレイヤー(${ws.userId})をルーム${roomId}から削除`);
+            }
+            if (room.players.length === 0) {
+                console.log(`ルーム${roomId}を削除（プレイヤーが不在）`);
+                delete rooms[roomId];
+            }
+        }
+    });
+
     // クエリパラメータからトークンを取得
     const token = new URL(req.url, 'http://localhost').searchParams.get('token');
     const user = await authenticateConnection(token);
@@ -486,27 +558,6 @@ wss.on("connection", async (ws, req) => {
             }
         } catch (error) {
             console.error("メッセージ処理中にエラー:", error);
-        }
-    });
-
-    ws.on("close", () => {
-        console.log("プレイヤーが切断。プレイヤーID:", ws.userId);
-        if (waitingPlayer === ws) {
-            console.log("待機プレイヤーが切断したため、待機キューをリセット");
-            waitingPlayer = null;
-        }
-        // 部屋からプレイヤーを削除
-        for (const roomId in rooms) {
-            const room = rooms[roomId];
-            const wasInRoom = room.players.includes(ws);
-            room.players = room.players.filter(player => player !== ws);
-            if (wasInRoom) {
-                console.log(`プレイヤー(${ws.userId})をルーム${roomId}から削除`);
-            }
-            if (room.players.length === 0) {
-                console.log(`ルーム${roomId}を削除（プレイヤーが不在）`);
-                delete rooms[roomId];
-            }
         }
     });
 });
