@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        trim: true
+        trim: true,
+        index: true
     },
     password: {
         type: String,
@@ -19,7 +20,8 @@ const userSchema = new mongoose.Schema({
     },
     wins: {
         type: Number,
-        default: 0
+        default: 0,
+        index: true
     },
     losses: {
         type: Number,
@@ -31,7 +33,22 @@ const userSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now
+        default: Date.now,
+        index: true
+    }
+});
+
+// 複合インデックスの作成
+userSchema.index({ rating: -1, wins: -1 });
+
+// パフォーマンス監視のためのミドルウェア
+userSchema.pre('find', function() {
+    this._startTime = Date.now();
+});
+
+userSchema.post('find', function() {
+    if (this._startTime) {
+        console.log(`クエリ実行時間: ${Date.now() - this._startTime}ms`);
     }
 });
 

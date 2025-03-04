@@ -46,18 +46,29 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // MongoDBに接続
+console.log('MongoDB接続を開始...');
+const startTime = Date.now();
+
 mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
     connectTimeoutMS: 10000,
     retryWrites: true,
-    retryReads: true
+    retryReads: true,
+    maxPoolSize: 10, // 接続プールのサイズを設定
+    minPoolSize: 2,  // 最小プールサイズ
+    maxIdleTimeMS: 30000, // アイドル接続のタイムアウト
 })
     .then(() => {
-        console.log('MongoDB接続成功');
+        const connectionTime = Date.now() - startTime;
+        console.log(`MongoDB接続成功 (${connectionTime}ms)`);
         console.log('接続URL:', process.env.MONGODB_URI.replace(/mongodb\+srv:\/\/([^:]+):([^@]+)@/, 'mongodb+srv://***:***@'));
+        
+        // 接続成功後にインデックスを作成/更新
+        return User.collection.getIndexes();
+    })
+    .then(indexes => {
+        console.log('現在のインデックス:', indexes);
     })
     .catch(err => {
         console.error('MongoDB接続エラー:', err);
@@ -88,10 +99,14 @@ app.use(express.static(path.join(__dirname, '/public'), {
     etag: true, // ETagを有効化
     lastModified: true, // Last-Modifiedを有効化
     setHeaders: (res, path) => {
-        // CSS, JS, 画像ファイルに対してキャッシュ制御を設定
-        if (path.endsWith('.css') || path.endsWith('.js') || 
-            path.endsWith('.jpg') || path.endsWith('.png')) {
-            res.setHeader('Cache-Control', 'public, max-age=86400'); // 24時間
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+        } else if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+        } else if (path.match(/\.(jpg|jpeg|png|gif)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
         }
     }
 }));
@@ -197,9 +212,12 @@ app.post('/api/login', async (req, res) => {
 // ランキング取得エンドポイント
 app.get('/api/rankings', async (req, res) => {
     try {
+        const queryStartTime = Date.now();
+
         // キャッシュが有効な場合はキャッシュを返す
         const now = Date.now();
         if (rankingsCache && (now - lastCacheTime) < CACHE_DURATION) {
+            console.log(`ランキングキャッシュヒット (${Date.now() - queryStartTime}ms)`);
             return res.json(rankingsCache);
         }
 
@@ -209,9 +227,10 @@ app.get('/api/rankings', async (req, res) => {
             return res.status(500).json({ error: 'データベース接続エラー' });
         }
 
+        console.log('ランキングデータをDBから取得中...');
         const rankings = await User.find()
-            .select('username rating wins losses')
-            .sort({ rating: -1 })
+            .select('username rating wins losses -_id') // _idを除外
+            .sort({ rating: -1, wins: -1 }) // 複合インデックスを使用
             .limit(100)
             .lean() // MongooseドキュメントをプレーンなJavaScriptオブジェクトに変換
             .catch(err => {
@@ -226,6 +245,10 @@ app.get('/api/rankings', async (req, res) => {
         // キャッシュを更新
         rankingsCache = rankings;
         lastCacheTime = now;
+
+        const queryEndTime = Date.now() - queryStartTime;
+        console.log(`ランキングデータ取得完了 (${queryEndTime}ms)`);
+        console.log(`取得件数: ${rankings.length}`);
 
         res.json(rankings);
     } catch (error) {
