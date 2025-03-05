@@ -593,6 +593,45 @@ function clearRankingsCache() {
     lastCacheTime = 0;
 }
 
+// ヘルスチェックエンドポイント
+app.get('/ping', (req, res) => {
+    const healthcheck = {
+        uptime: process.uptime(),
+        message: 'OK',
+        timestamp: Date.now()
+    };
+    try {
+        res.status(200).json(healthcheck);
+    } catch (error) {
+        healthcheck.message = error;
+        res.status(503).json(healthcheck);
+    }
+});
+
+// サーバーの起動時間を記録
+const serverStartTime = Date.now();
+
+// サーバーの状態を監視（14分ごと）
+const MONITOR_INTERVAL = 14 * 60 * 1000; // 14分
+
+setInterval(() => {
+    const uptime = process.uptime();
+    const memoryUsage = process.memoryUsage();
+    const currentTime = new Date().toISOString();
+    
+    console.log('=== サーバー状態レポート ===');
+    console.log(`現在時刻: ${currentTime}`);//should be 14mins for interval time
+    console.log(`サーバー起動時間: ${new Date(serverStartTime).toISOString()}`);//should be 14mins for interval time
+    console.log(`稼働時間: ${Math.floor(uptime)}秒 (${Math.floor(uptime / 60)}分)`);//should be 60*14=840
+    console.log(`メモリ使用量: ${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`);
+    console.log('========================');
+}, MONITOR_INTERVAL);
+
+// 初回のログを即時出力
+console.log('=== サーバー初期状態 ===');
+console.log(`起動時刻: ${new Date(serverStartTime).toISOString()}`);
+console.log('========================');
+
 const PORT = process.env.PORT || 3000;  // 環境変数 PORT を優先
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

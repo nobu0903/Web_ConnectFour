@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
         onLoginSuccess(token);
     }
     
+    // Pingサービスを開始
+    startPingService();
+    
     document.getElementById('next-button').addEventListener('click', () => {
         resetBoard(); // 盤面をリセット
         showModeSelection();
@@ -96,6 +99,35 @@ function initializeWebSocket(token) {
 function onLoginSuccess(token) {
     console.log('ログイン成功、WebSocket接続を開始');
     initializeWebSocket(token);
+}
+
+// Ping機能の実装
+//render freee plan have shitty function that sleep in each 15 mins so I have to refresh page in every 14 mins I can refresh 15min - 1sec but I don't wanna do such a boring thing so I use 14 mins and I use ping to keep connection alive
+function startPingService() {
+    const PING_INTERVAL = 14 * 60 * 1000; // 14分
+    const PING_URL = '/ping';
+    //async is used to define an asynchronous function, which means the function will always return a Promise and can use await inside it.
+    //1. sendPing() is called.
+    //2. The function pauses at await fetch(PING_URL) until the network request completes.
+    //3. Once the request completes, the function pauses again at await response.json() until the JSON is parsed.
+    //4. Finally, it logs "Ping送信成功" with the parsed data.
+    //5. If any error happens, it logs "Ping送信エラー" instead.
+
+    async function sendPing() {
+        try {
+            const response = await fetch(PING_URL); //await is pause execusion until the promise is resolved
+            const data = await response.json();
+            console.log('Ping送信成功:', data);
+        } catch (error) {
+            console.error('Ping送信エラー:', error);
+        }
+    }
+
+    // 初回のPingを送信
+    sendPing();
+
+    // 定期的にPingを送信
+    setInterval(sendPing, PING_INTERVAL);
 }
 
 
