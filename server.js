@@ -462,9 +462,8 @@ wss.on('connection', async (ws, req) => {
                     console.log("新しいルームを作成:", roomId);
                     console.log("ルーム情報:", rooms[roomId]);
 
-                    // ランダムに先手を決定（0または1）
-                    const firstPlayerIndex = Math.floor(Math.random() * 2);
-                    const [firstPlayer, secondPlayer] = firstPlayerIndex === 0 ? [player1, player2] : [player2, player1];
+                    // I wanted to make first player randomly but it is getting error and bug so maybe it is complicated I think if i cahnge this easier, the problem that response wrong result of game will solve hopefully
+                    const [firstPlayer, secondPlayer] = [player1, player2];
 
                     console.log("先手プレイヤー:", firstPlayer.userId);
 
