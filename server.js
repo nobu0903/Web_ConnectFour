@@ -595,14 +595,53 @@ function clearRankingsCache() {
 // ヘルスチェックエンドポイント
 app.get('/ping', (req, res) => {
     const healthcheck = {
+        status: 'OK',
         uptime: process.uptime(),
-        message: 'OK',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        serverStartTime: startTime,
+        memoryUsage: {
+            heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+            external: Math.round(process.memoryUsage().external / 1024 / 1024)
+        },
+        activeConnections: {
+            ws: wss.clients.size,
+            rooms: Object.keys(rooms).length
+        },
+        activeGames: {
+            count: Object.keys(rooms).length,
+            players: wss.clients.size
+        }
     };
+
     try {
+        // MongoDBの接続状態も確認
+        if (mongoose.connection.readyState !== 1) {
+            healthcheck.status = 'WARNING';
+            healthcheck.message = 'データベース接続が確立されていません';
+        }
+
+        // アクティブなゲームがある場合の処理
+        if (Object.keys(rooms).length > 0) {
+            healthcheck.status = 'ACTIVE_GAMES';
+            healthcheck.message = 'アクティブなゲームセッションがあります';
+            
+            // アクティブなプレイヤーに通知
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: 'serverStatus',
+                        status: 'active',
+                        timestamp: Date.now()
+                    }));
+                }
+            });
+        }
+
         res.status(200).json(healthcheck);
     } catch (error) {
-        healthcheck.message = error;
+        healthcheck.status = 'ERROR';
+        healthcheck.message = error.message;
         res.status(503).json(healthcheck);
     }
 });
