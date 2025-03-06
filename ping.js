@@ -5,47 +5,41 @@ exports.handler = async (event, context) => {
 
     return new Promise((resolve, reject) => {
         const req = https.get(url, (res) => {
-            // リダイレクトの処理
-            if (res.statusCode === 301 || res.statusCode === 302) {
-                const redirectUrl = res.headers.location;
-                console.log(`リダイレクト先: ${redirectUrl}`);
-                // リダイレクト先のURLで新しいリクエストを送信
-                https.get(redirectUrl, (redirectRes) => {
-                    if (redirectRes.statusCode === 200) {
+            let data = '';
+
+            // レスポンスデータの収集
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    try {
+                        const responseData = JSON.parse(data);
                         resolve({
                             statusCode: 200,
-                            body: 'サーバーが正常にPingされました',
+                            body: responseData,
                             timestamp: new Date().toISOString()
                         });
-                    } else {
-                        reject(
-                            new Error(`サーバーPing失敗: ステータスコード ${redirectRes.statusCode}`)
-                        );
+                    } catch (error) {
+                        reject(new Error(`JSON解析エラー: ${error.message}`));
                     }
-                }).on('error', (error) => {
-                    reject(error);
-                });
-            } else if (res.statusCode === 200) {
-                resolve({
-                    statusCode: 200,
-                    body: 'サーバーが正常にPingされました',
-                    timestamp: new Date().toISOString()
-                });
-            } else {
-                reject(
-                    new Error(`サーバーPing失敗: ステータスコード ${res.statusCode}`)
-                );
-            }
+                } else {
+                    reject(
+                        new Error(`サーバーPing失敗: ステータスコード ${res.statusCode}, レスポンス: ${data}`)
+                    );
+                }
+            });
         });
-        //error handling
+
         req.on('error', (error) => {
-            reject(error);
+            reject(new Error(`リクエストエラー: ${error.message}`));
         });
         //error handling
         // タイムアウトを設定
-        req.setTimeout(5000, () => {
+        req.setTimeout(10000, () => {
             req.abort();
-            reject(new Error('Pingリクエストがタイムアウトしました'));
+            reject(new Error('Pingリクエストがタイムアウトしました（10秒）'));
         });
 
         req.end();
