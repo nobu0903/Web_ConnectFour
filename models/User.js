@@ -18,19 +18,6 @@ const userSchema = new mongoose.Schema({
         default: 1500,  // 初期レーティング
         index: true
     },
-    wins: {
-        type: Number,
-        default: 0,
-        index: true
-    },
-    losses: {
-        type: Number,
-        default: 0
-    },
-    draws: {
-        type: Number,
-        default: 0
-    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -38,8 +25,8 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// 複合インデックスの作成
-userSchema.index({ rating: -1, wins: -1 });
+// レーティングのインデックス
+userSchema.index({ rating: -1 });
 
 // パフォーマンス監視のためのミドルウェア
 userSchema.pre('find', function() {

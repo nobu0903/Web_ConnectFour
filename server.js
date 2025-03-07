@@ -276,8 +276,8 @@ app.get('/api/rankings', async (req, res) => {
 
         console.log('ランキングデータをDBから取得中...');
         const rankings = await User.find()
-            .select('username rating wins losses -_id')
-            .sort({ rating: -1, wins: -1 })
+            .select('username rating -_id')  // wins, lossesを削除
+            .sort({ rating: -1 })
             .limit(100)
             .lean()
             .exec();
@@ -462,17 +462,17 @@ wss.on('connection', async (ws, req) => {
                     console.log("新しいルームを作成:", roomId);
                     console.log("ルーム情報:", rooms[roomId]);
 
-                    // I wanted to make first player randomly but it is getting error and bug so maybe it is complicated I think if i cahnge this easier, the problem that response wrong result of game will solve hopefully
+                    // 先手後手を設定（player1が先手）
                     const [firstPlayer, secondPlayer] = [player1, player2];
-
                     console.log("先手プレイヤー:", firstPlayer.userId);
+                    console.log("後手プレイヤー:", secondPlayer.userId);
 
                     try {
                         firstPlayer.send(JSON.stringify({ 
                             type: "gameStart", 
                             roomId, 
                             playerNumber: 1,
-                            isFirstMove: true,
+                            isFirstMove: true,  // 先手なのでtrue
                             rating: firstPlayer.rating,
                             opponentRating: secondPlayer.rating,
                             myUsername: firstPlayer.username,
@@ -484,7 +484,7 @@ wss.on('connection', async (ws, req) => {
                             type: "gameStart", 
                             roomId, 
                             playerNumber: 2,
-                            isFirstMove: false,
+                            isFirstMove: false,  // 後手なのでfalse
                             rating: secondPlayer.rating,
                             opponentRating: firstPlayer.rating,
                             myUsername: secondPlayer.username,
@@ -502,59 +502,69 @@ wss.on('connection', async (ws, req) => {
                 }
             }
 
-            if (data.type === "gameEnd") {
-                console.log("ゲーム終了メッセージを受信:", data);
-                
-                // ルームを取得
+            if (data.type === 'gameEnd') {
                 const room = rooms[data.roomId];
-                if (!room) {
-                    console.log("ルームが見つかりません:", data.roomId);
-                    return;
-                }
-
-                // 勝者を判定
-                let winner = null;
-                if (!data.isDraw) {
-                    winner = data.winner;
-                }
-
-                // レーティング更新
-                const player1 = room.players[0];
-                const player2 = room.players[1];
-                const player1User = await User.findById(room.userIds[0]);
-                const player2User = await User.findById(room.userIds[1]);
-
-                if (player1User && player2User) {
-                    const result = calculateNewRatings(player1User.rating, player2User.rating, winner === 'red');
-                    player1User.rating = result.player1NewRating;
-                    player2User.rating = result.player2NewRating;
-
-                    // プレイヤーに結果を送信（1回だけ）
-                    const sendResult = (player, isFirstPlayer) => {
-                        const result = isFirstPlayer ? 
-                            (winner === 'red' ? 'win' : (winner === 'yellow' ? 'loss' : 'draw')) :
-                            (winner === 'yellow' ? 'win' : (winner === 'red' ? 'loss' : 'draw'));
-
-                        const message = {
-                            type: "gameResult",
-                            result,
-                            isFirstPlayer,
-                            oldRating: isFirstPlayer ? player1User.rating : player2User.rating,
-                            newRating: isFirstPlayer ? result.player1NewRating : result.player2NewRating,
-                            opponentOldRating: isFirstPlayer ? player2User.rating : player1User.rating,
-                            opponentNewRating: isFirstPlayer ? result.player2NewRating : result.player1NewRating,
-                            myUsername: isFirstPlayer ? player1User.username : player2User.username,
-                            opponentUsername: isFirstPlayer ? player2User.username : player1User.username
-                        };
-
-                        if (player.readyState === WebSocket.OPEN) {
-                            player.send(JSON.stringify(message));
+                if (room) {
+                    const player1 = await User.findById(room.userIds[0]);
+                    const player2 = await User.findById(room.userIds[1]);
+                    
+                    let result;
+                    if (data.isDraw) {
+                        result = 'draw';
+                    } else {
+                        // 勝者がplayer1かどうかを判定
+                        const isPlayer1Winner = (room.players[0].userId.toString() === ws.userId.toString() && data.winner === 'red') ||
+                                             (room.players[1].userId.toString() === ws.userId.toString() && data.winner === 'yellow');
+                        result = isPlayer1Winner ? 'win' : 'loss';
+                    }
+                    
+                    const oldRating1 = player1.rating;
+                    const oldRating2 = player2.rating;
+                    
+                    const ratings = calculateNewRatings(oldRating1, oldRating2, result === 'win');
+                    
+                    // レーティングを更新
+                    player1.rating = ratings.player1NewRating;
+                    player2.rating = ratings.player2NewRating;
+                    
+                    await player1.save();
+                    await player2.save();
+                    
+                    // ランキングキャッシュをクリア
+                    clearRankingsCache();
+                    
+                    // 両プレイヤーに結果を通知（各プレイヤーに適切な結果を送信）
+                    room.players.forEach((player, index) => {
+                        const isFirstPlayer = index === 0;
+                        const oldRating = isFirstPlayer ? oldRating1 : oldRating2;
+                        const newRating = isFirstPlayer ? ratings.player1NewRating : ratings.player2NewRating;
+                        const opponentOldRating = isFirstPlayer ? oldRating2 : oldRating1;
+                        const opponentNewRating = isFirstPlayer ? ratings.player2NewRating : ratings.player1NewRating;
+                        
+                        // 結果を各プレイヤーに合わせて設定
+                        let playerResult;
+                        if (data.isDraw) {
+                            playerResult = 'draw';
+                        } else {
+                            const isThisPlayerWinner = (player.userId.toString() === ws.userId.toString() && data.winner === 'red') ||
+                                                    (player.userId.toString() === ws.userId.toString() && data.winner === 'yellow');
+                            playerResult = isThisPlayerWinner ? 'win' : 'loss';
                         }
-                    };
-
-                    // 各プレイヤーに1回だけ結果を送信
-                    sendResult(player1, true);
-                    sendResult(player2, false);
+                        
+                        player.send(JSON.stringify({
+                            type: 'gameResult',
+                            result: playerResult,
+                            isFirstPlayer: isFirstPlayer,
+                            oldRating: oldRating,
+                            newRating: newRating,
+                            opponentOldRating: opponentOldRating,
+                            opponentNewRating: opponentNewRating,
+                            myUsername: isFirstPlayer ? player1.username : player2.username,
+                            opponentUsername: isFirstPlayer ? player2.username : player1.username
+                        }));
+                    });
+                    
+                    delete rooms[data.roomId];
                 }
             }
 
@@ -590,53 +600,14 @@ function clearRankingsCache() {
 // ヘルスチェックエンドポイント
 app.get('/ping', (req, res) => {
     const healthcheck = {
-        status: 'OK',
         uptime: process.uptime(),
-        timestamp: Date.now(),
-        serverStartTime: startTime,
-        memoryUsage: {
-            heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-            heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-            external: Math.round(process.memoryUsage().external / 1024 / 1024)
-        },
-        activeConnections: {
-            ws: wss.clients.size,
-            rooms: Object.keys(rooms).length
-        },
-        activeGames: {
-            count: Object.keys(rooms).length,
-            players: wss.clients.size
-        }
+        message: 'OK',
+        timestamp: Date.now()
     };
-
     try {
-        // MongoDBの接続状態も確認
-        if (mongoose.connection.readyState !== 1) {
-            healthcheck.status = 'WARNING';
-            healthcheck.message = 'データベース接続が確立されていません';
-        }
-
-        // アクティブなゲームがある場合の処理
-        if (Object.keys(rooms).length > 0) {
-            healthcheck.status = 'ACTIVE_GAMES';
-            healthcheck.message = 'アクティブなゲームセッションがあります';
-            
-            // アクティブなプレイヤーに通知
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify({
-                        type: 'serverStatus',
-                        status: 'active',
-                        timestamp: Date.now()
-                    }));
-                }
-            });
-        }
-
         res.status(200).json(healthcheck);
     } catch (error) {
-        healthcheck.status = 'ERROR';
-        healthcheck.message = error.message;
+        healthcheck.message = error;
         res.status(503).json(healthcheck);
     }
 });

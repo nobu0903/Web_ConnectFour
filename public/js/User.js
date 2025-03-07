@@ -16,18 +16,6 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 1500  // 初期レーティング
     },
-    wins: {
-        type: Number,
-        default: 0
-    },
-    losses: {
-        type: Number,
-        default: 0
-    },
-    draws: {
-        type: Number,
-        default: 0
-    },
     createdAt: {
         type: Date,
         default: Date.now

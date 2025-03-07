@@ -40,23 +40,18 @@ function updateRankingTable(rankings) {
     }
     
     if (!rankings || rankings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="no-data">ランキングデータがありません</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="no-data">ランキングデータがありません</td></tr>';
         return;
     }
 
     tbody.innerHTML = '';
     rankings.forEach((user, index) => {
         const row = document.createElement('tr');
-        const totalGames = user.wins + user.losses;
-        const winRate = totalGames > 0 ? ((user.wins / totalGames) * 100).toFixed(1) : '0.0';
         
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${user.username}</td>
             <td>${user.rating}</td>
-            <td>${user.wins}</td>
-            <td>${user.losses}</td>
-            <td class="win-rate">${winRate}%</td>
         `;
         
         tbody.appendChild(row);
@@ -83,7 +78,7 @@ async function showRankings() {
         console.error('ランキング表示エラー:', error);
         const tbody = document.getElementById('ranking-body');
         if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="6" class="error-message">
+            tbody.innerHTML = `<tr><td colspan="3" class="error-message">
                 ランキングの読み込みに失敗しました。<br>
                 ページを更新してください。
             </td></tr>`;
