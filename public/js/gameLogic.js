@@ -5,6 +5,7 @@ import { showAuthForm } from "./auth.js";
 
 // WebSocketのグローバル変数
 let socket = null;
+let isResultDisplayed = false; // 結果表示状態を追跡するフラグ
 
 // WebSocket接続を確立する関数
 export function initializeWebSocket(token = null) {
@@ -24,6 +25,7 @@ export function initializeWebSocket(token = null) {
     
     socket.onopen = () => {
         console.log('WebSocket接続が確立されました。状態:', socket.readyState);
+        isResultDisplayed = false; // 接続時にフラグをリセット
     };
     
     socket.onclose = () => {
@@ -101,47 +103,11 @@ export function initializeWebSocket(token = null) {
                 } else {
                     console.log("異なるルームIDのmoveメッセージを無視");
                 }
-            } else if (data.type === "gameEnd") {
-                console.log("ゲーム終了メッセージを受信:", data);
-                
-                // 結果表示エリアの要素を取得
-                const gameResult = document.getElementById("game-result");
-                const resultPlayer1Name = document.getElementById("result-player1-name");
-                const resultPlayer1Rating = document.getElementById("result-player1-rating-change");
-                const resultPlayer2Name = document.getElementById("result-player2-name");
-                const resultPlayer2Rating = document.getElementById("result-player2-rating-change");
-
-                // 引き分けの場合
-                if (data.isDraw) {
-                    document.querySelector('.game-result h3').textContent = 'draw';
-                } else {
-                    // winnerとfirstPlayerIndexを比較して勝敗を判定
-                    const isWinnerFirstPlayer = (data.winner === 'red' && data.isFirstMove) || (data.winner === 'yellow' && !data.isFirstMove);
-                    document.querySelector('.game-result h3').textContent = isWinnerFirstPlayer ? 'You win!' : 'You lose!';
-                }
-
-                // プレイヤー情報を設定
-                if (data.isFirstMove) {
-                    resultPlayer1Name.textContent = "You";
-                    resultPlayer2Name.textContent = "Opponent";
-                } else {
-                    resultPlayer1Name.textContent = "Opponent";
-                    resultPlayer2Name.textContent = "You";
-                }
-
-                // 結果表示エリアを表示
-                gameResult.style.display = "block";
             } else if (data.type === "gameResult") {
                 console.log("ゲーム結果メッセージを受信:", data);
                 
-                // 既に結果が表示されている場合は処理をスキップ
-                const gameResult = document.getElementById("game-result");
-                if (gameResult.style.display === "block") {
-                    console.log("既に結果が表示されているため、このメッセージをスキップします");
-                    return;
-                }
-                
                 // 結果表示エリアの要素を取得
+                const gameResult = document.getElementById("game-result");
                 const resultPlayer1Name = document.getElementById("result-player1-name");
                 const resultPlayer1Rating = document.getElementById("result-player1-rating-change");
                 const resultPlayer2Name = document.getElementById("result-player2-name");

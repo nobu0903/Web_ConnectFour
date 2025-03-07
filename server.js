@@ -502,64 +502,52 @@ wss.on('connection', async (ws, req) => {
                 }
             }
 
-            if (data.type === 'gameEnd') {
+            if (data.type === "gameEnd") {
+                console.log("ゲーム終了メッセージを受信:", data);
+                
+                // ルームを取得
                 const room = rooms[data.roomId];
-                if (room) {
-                    const player1 = await User.findById(room.userIds[0]);
-                    const player2 = await User.findById(room.userIds[1]);
-                    
-                    let result;
-                    if (data.isDraw) {
-                        result = 'draw';
-                    } else {
-                        // 勝者がplayer1かどうかを判定
-                        const isPlayer1Winner = room.players[0].userId.toString() === ws.userId.toString() && data.winner === 'red' ||
-                                             room.players[1].userId.toString() === ws.userId.toString() && data.winner === 'yellow';
-                        result = isPlayer1Winner ? 'win' : 'loss';
-                    }
-                    
-                    const oldRating1 = player1.rating;
-                    const oldRating2 = player2.rating;
-                    
-                    const ratings = calculateNewRatings(oldRating1, oldRating2, result);
-                    
-                    // レーティングと戦績を更新
-                    player1.rating = ratings.player1NewRating;
-                    player2.rating = ratings.player2NewRating;
-                    
-                    if (result === 'win') {
-                        player1.wins += 1;
-                        player2.losses += 1;
-                    } else if (result === 'loss') {
-                        player1.losses += 1;
-                        player2.wins += 1;
-                    } else {
-                        player1.draws += 1;
-                        player2.draws += 1;
-                    }
-                    
-                    await player1.save();
-                    await player2.save();
-                    
-                    // ランキングキャッシュをクリア
-                    clearRankingsCache();
-                    
-                    // 両プレイヤーに結果を通知
+                if (!room) {
+                    console.log("ルームが見つかりません:", data.roomId);
+                    return;
+                }
+
+                // 勝者を判定
+                let winner = null;
+                if (!data.isDraw) {
+                    winner = data.winner;
+                }
+
+                // レーティング更新
+                const player1 = room.players[0];
+                const player2 = room.players[1];
+                const player1User = await User.findById(room.userIds[0]);
+                const player2User = await User.findById(room.userIds[1]);
+
+                if (player1User && player2User) {
+                    const result = calculateNewRatings(player1User.rating, player2User.rating, winner === 'red');
+                    player1User.rating = result.player1NewRating;
+                    player2User.rating = result.player2NewRating;
+
+                    // プレイヤーに結果を送信（1回だけ）
                     room.players.forEach((player, index) => {
                         const isFirstPlayer = index === 0;
-                        const oldRating = isFirstPlayer ? oldRating1 : oldRating2;
-                        const newRating = isFirstPlayer ? ratings.player1NewRating : ratings.player2NewRating;
-                        
-                        player.send(JSON.stringify({
-                            type: 'gameResult',
-                            oldRating: oldRating,
-                            newRating: newRating,
-                            ratingChange: newRating - oldRating,
-                            result: isFirstPlayer ? result : (result === 'win' ? 'loss' : result === 'loss' ? 'win' : 'draw')
-                        }));
+                        const result = isFirstPlayer ? 
+                            (winner === 'red' ? 'win' : (winner === 'yellow' ? 'loss' : 'draw')) :
+                            (winner === 'yellow' ? 'win' : (winner === 'red' ? 'loss' : 'draw'));
+
+                        const message = {
+                            type: "gameResult",
+                            result,
+                            isFirstPlayer,
+                            newRating: isFirstPlayer ? player1User.rating : player2User.rating,
+                            ratingChange: isFirstPlayer ? result.player1RatingChange : result.player2RatingChange,
+                            opponentNewRating: isFirstPlayer ? player2User.rating : player1User.rating,
+                            opponentRatingChange: isFirstPlayer ? result.player2RatingChange : result.player1RatingChange
+                        };
+
+                        player.send(JSON.stringify(message));
                     });
-                    
-                    delete rooms[data.roomId];
                 }
             }
 
