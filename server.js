@@ -11,6 +11,7 @@ import cors from 'cors';
 import User from './models/User.js';
 import { calculateNewRatings } from './utils/rating.js';
 import rateLimit from 'express-rate-limit';
+import ComputerPlayer from './utils/computerPlayer.js';
 
 dotenv.config();
 
@@ -445,6 +446,83 @@ wss.on('connection', async (ws, req) => {
                     // 待機プレイヤーがいないなら、待機状態にする
                     waitingPlayer = ws;
                     console.log("プレイヤーをマッチング待機状態に設定。プレイヤーID:", ws.userId);
+                    
+                    // カウントダウン開始時刻を記録
+                    const startTime = Date.now();
+                    const totalWaitTime = 30000; // 30秒
+                    
+                    // 1秒ごとにカウントダウンを送信
+                    const countdownInterval = setInterval(() => {
+                        if (waitingPlayer === ws) {
+                            const elapsedTime = Date.now() - startTime;
+                            const remainingTime = Math.max(0, Math.ceil((totalWaitTime - elapsedTime) / 1000));
+                            
+                            ws.send(JSON.stringify({
+                                type: 'matchingCountdown',
+                                remainingSeconds: remainingTime
+                            }));
+                        } else {
+                            clearInterval(countdownInterval);
+                        }
+                    }, 1000);
+                    
+                    // 30秒後にコンピューターとマッチング
+                    setTimeout(() => {
+                        clearInterval(countdownInterval); // カウントダウンを停止
+                        
+                        if (waitingPlayer === ws) {
+                            console.log("30秒経過: コンピューターとマッチング");
+                            const computerPlayer = new ComputerPlayer();
+                            
+                            // コンピューターの手を受け取った時の処理
+                            computerPlayer.onMove = (moveData) => {
+                                if (rooms[moveData.roomId]) {
+                                    rooms[moveData.roomId].players.forEach((client) => {
+                                        if (client !== computerPlayer && client.readyState === WebSocket.OPEN) {
+                                            client.send(JSON.stringify({
+                                                type: 'move',
+                                                move: moveData.move,
+                                                roomId: moveData.roomId
+                                            }));
+                                        }
+                                    });
+                                }
+                            };
+                            
+                            const roomId = Math.random().toString(36).substr(2, 6);
+                            rooms[roomId] = {
+                                players: [ws, computerPlayer],
+                                userIds: [ws.userId, 'computer']
+                            };
+                            
+                            waitingPlayer = null;
+                            
+                            // プレイヤーにゲーム開始を通知
+                            ws.send(JSON.stringify({
+                                type: "gameStart",
+                                roomId,
+                                playerNumber: 1,
+                                isFirstMove: true,
+                                rating: ws.rating,
+                                opponentRating: computerPlayer.rating,
+                                myUsername: ws.username,
+                                opponentUsername: computerPlayer.username,
+                                isComputerOpponent: true
+                            }));
+                            
+                            // コンピューターにゲーム開始を通知
+                            computerPlayer.send(JSON.stringify({
+                                type: "gameStart",
+                                roomId,
+                                playerNumber: 2,
+                                isFirstMove: false,
+                                rating: computerPlayer.rating,
+                                opponentRating: ws.rating,
+                                myUsername: computerPlayer.username,
+                                opponentUsername: ws.username
+                            }));
+                        }
+                    }, 30000); // 30秒待機
                 } else if (waitingPlayer !== ws) {
                     // すでに待機しているプレイヤーがいるなら、マッチング
                     const player1 = waitingPlayer;
@@ -497,72 +575,114 @@ wss.on('connection', async (ws, req) => {
                         delete rooms[roomId];
                         waitingPlayer = null;
                     }
-                } else {
-                    console.log("同じプレイヤーからのマッチング要求を無視。プレイヤーID:", ws.userId);
                 }
             }
 
             if (data.type === 'gameEnd') {
                 const room = rooms[data.roomId];
                 if (room) {
-                    const player1 = await User.findById(room.userIds[0]);
-                    const player2 = await User.findById(room.userIds[1]);
-                    
-                    let result;
-                    if (data.isDraw) {
-                        result = 'draw';
-                    } else {
-                        // 勝者がplayer1かどうかを判定
-                        const isPlayer1Winner = (room.players[0].userId.toString() === ws.userId.toString() && data.winner === 'red') ||
-                                             (room.players[1].userId.toString() === ws.userId.toString() && data.winner === 'yellow');
-                        result = isPlayer1Winner ? 'win' : 'loss';
-                    }
-                    
-                    const oldRating1 = player1.rating;
-                    const oldRating2 = player2.rating;
-                    
-                    const ratings = calculateNewRatings(oldRating1, oldRating2, result === 'win');
-                    
-                    // レーティングを更新
-                    player1.rating = ratings.player1NewRating;
-                    player2.rating = ratings.player2NewRating;
-                    
-                    await player1.save();
-                    await player2.save();
-                    
-                    // ランキングキャッシュをクリア
-                    clearRankingsCache();
-                    
-                    // 両プレイヤーに結果を通知（各プレイヤーに適切な結果を送信）
-                    room.players.forEach((player, index) => {
-                        const isFirstPlayer = index === 0;
-                        const oldRating = isFirstPlayer ? oldRating1 : oldRating2;
-                        const newRating = isFirstPlayer ? ratings.player1NewRating : ratings.player2NewRating;
-                        const opponentOldRating = isFirstPlayer ? oldRating2 : oldRating1;
-                        const opponentNewRating = isFirstPlayer ? ratings.player2NewRating : ratings.player1NewRating;
+                    // コンピューター対戦の場合の特別処理
+                    if (room.userIds.includes('computer')) {
+                        const humanPlayerId = room.userIds.find(id => id !== 'computer');
+                        const humanPlayer = await User.findById(humanPlayerId);
                         
-                        // 結果を各プレイヤーに合わせて設定
-                        let playerResult;
+                        if (humanPlayer) {
+                            // レーティング変動の計算（コンピューター対戦用）
+                            const computerRating = 1500; // コンピューターの固定レーティング
+                            const oldRating = humanPlayer.rating;
+                            
+                            // 勝敗に応じてレーティングを更新（redの場合は必ず人間の勝ち）
+                            const isHumanWinner = data.isDraw ? false : (data.winner === 'red');
+                            
+                            console.log('レーティング計算情報:', {
+                                humanRating: oldRating,
+                                computerRating,
+                                isHumanWinner,
+                                winner: data.winner,
+                                isDraw: data.isDraw
+                            });
+                            
+                            // レーティング変動の倍率を設定（コンピューター対戦用）
+                            const ratings = calculateNewRatings(oldRating, computerRating, isHumanWinner);
+                            const ratingMultiplier = 1.0; // レーティング変動を2倍に
+                            const ratingChange = (ratings.player1NewRating - oldRating) * ratingMultiplier;
+                            humanPlayer.rating = Math.round(oldRating + ratingChange);
+                            
+                            await humanPlayer.save();
+                            
+                            // ランキングキャッシュをクリア
+                            clearRankingsCache();
+                            
+                            // 結果を通知
+                            ws.send(JSON.stringify({
+                                type: 'gameResult',
+                                result: data.isDraw ? 'draw' : (isHumanWinner ? 'win' : 'loss'),
+                                oldRating: oldRating,
+                                newRating: humanPlayer.rating,
+                                opponentOldRating: computerRating,
+                                opponentNewRating: computerRating,
+                                myUsername: humanPlayer.username,
+                                opponentUsername: 'コンピューター'
+                            }));
+                        }
+                    } else {
+                        // 通常の人間同士の対戦の場合（既存のコード）
+                        const player1 = await User.findById(room.userIds[0]);
+                        const player2 = await User.findById(room.userIds[1]);
+                        
+                        let result;
                         if (data.isDraw) {
-                            playerResult = 'draw';
+                            result = 'draw';
                         } else {
-                            const isThisPlayerWinner = (player.userId.toString() === ws.userId.toString() && data.winner === 'red') ||
-                                                    (player.userId.toString() === ws.userId.toString() && data.winner === 'yellow');
-                            playerResult = isThisPlayerWinner ? 'win' : 'loss';
+                            // 勝者判定を修正
+                            const isCurrentPlayerWinner = (data.winner === 'red' && room.players[0] === ws) ||
+                                                       (data.winner === 'yellow' && room.players[1] === ws);
+                            result = isCurrentPlayerWinner ? 'win' : 'loss';
                         }
                         
-                        player.send(JSON.stringify({
-                            type: 'gameResult',
-                            result: playerResult,
-                            isFirstPlayer: isFirstPlayer,
-                            oldRating: oldRating,
-                            newRating: newRating,
-                            opponentOldRating: opponentOldRating,
-                            opponentNewRating: opponentNewRating,
-                            myUsername: isFirstPlayer ? player1.username : player2.username,
-                            opponentUsername: isFirstPlayer ? player2.username : player1.username
-                        }));
-                    });
+                        const oldRating1 = player1.rating;
+                        const oldRating2 = player2.rating;
+                        
+                        const ratings = calculateNewRatings(oldRating1, oldRating2, result === 'win');
+                        
+                        player1.rating = ratings.player1NewRating;
+                        player2.rating = ratings.player2NewRating;
+                        
+                        await player1.save();
+                        await player2.save();
+                        
+                        clearRankingsCache();
+                        
+                        room.players.forEach((player, index) => {
+                            const isFirstPlayer = index === 0;
+                            const oldRating = isFirstPlayer ? oldRating1 : oldRating2;
+                            const newRating = isFirstPlayer ? ratings.player1NewRating : ratings.player2NewRating;
+                            const opponentOldRating = isFirstPlayer ? oldRating2 : oldRating1;
+                            const opponentNewRating = isFirstPlayer ? ratings.player2NewRating : ratings.player1NewRating;
+                            
+                            let playerResult;
+                            if (data.isDraw) {
+                                playerResult = 'draw';
+                            } else {
+                                // 各プレイヤーの勝敗判定を修正
+                                const isWinner = (data.winner === 'red' && index === 0) ||
+                                                (data.winner === 'yellow' && index === 1);
+                                playerResult = isWinner ? 'win' : 'loss';
+                            }
+                            
+                            player.send(JSON.stringify({
+                                type: 'gameResult',
+                                result: playerResult,
+                                isFirstPlayer: isFirstPlayer,
+                                oldRating: oldRating,
+                                newRating: newRating,
+                                opponentOldRating: opponentOldRating,
+                                opponentNewRating: opponentNewRating,
+                                myUsername: isFirstPlayer ? player1.username : player2.username,
+                                opponentUsername: isFirstPlayer ? player2.username : player1.username
+                            }));
+                        });
+                    }
                     
                     delete rooms[data.roomId];
                 }
@@ -572,15 +692,26 @@ wss.on('connection', async (ws, req) => {
                 const roomId = data.roomId;
                 console.log('動きが受信されました:', data.move, 'ルームID:', roomId);
                 
-                // 同じルームのクライアントにのみ動きを送信
                 if (rooms[roomId]) {
                     rooms[roomId].players.forEach((client) => {
-                        if (client !== ws && client.readyState === WebSocket.OPEN) {
-                            client.send(JSON.stringify({
-                                type: 'move',
-                                move: data.move,
-                                roomId: roomId
-                            }));
+                        if (client !== ws) {
+                            if (client.isComputer) {
+                                // コンピューターの場合、1秒後に応答
+                                setTimeout(() => {
+                                    const computerMove = client.calculateMove(data.board || [...Array(6)].map(() => Array(7).fill(null)));
+                                    client._onMove({
+                                        type: 'move',
+                                        move: { col: computerMove },
+                                        roomId: roomId
+                                    });
+                                }, 1000);
+                            } else if (client.readyState === WebSocket.OPEN) {
+                                client.send(JSON.stringify({
+                                    type: 'move',
+                                    move: data.move,
+                                    roomId: roomId
+                                }));
+                            }
                         }
                     });
                 }

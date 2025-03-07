@@ -1,6 +1,6 @@
 // Eloレーティングの計算
 export function calculateNewRatings(player1Rating, player2Rating, result) {
-    const K = 32; // レーティング変動の係数
+    const K = 64; // レーティング変動の係数
     const expectedScore1 = 1 / (1 + Math.pow(10, (player2Rating - player1Rating) / 400));
     const expectedScore2 = 1 / (1 + Math.pow(10, (player1Rating - player2Rating) / 400));
 
