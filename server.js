@@ -530,8 +530,7 @@ wss.on('connection', async (ws, req) => {
                     player2User.rating = result.player2NewRating;
 
                     // プレイヤーに結果を送信（1回だけ）
-                    room.players.forEach((player, index) => {
-                        const isFirstPlayer = index === 0;
+                    const sendResult = (player, isFirstPlayer) => {
                         const result = isFirstPlayer ? 
                             (winner === 'red' ? 'win' : (winner === 'yellow' ? 'loss' : 'draw')) :
                             (winner === 'yellow' ? 'win' : (winner === 'red' ? 'loss' : 'draw'));
@@ -540,14 +539,22 @@ wss.on('connection', async (ws, req) => {
                             type: "gameResult",
                             result,
                             isFirstPlayer,
-                            newRating: isFirstPlayer ? player1User.rating : player2User.rating,
-                            ratingChange: isFirstPlayer ? result.player1RatingChange : result.player2RatingChange,
-                            opponentNewRating: isFirstPlayer ? player2User.rating : player1User.rating,
-                            opponentRatingChange: isFirstPlayer ? result.player2RatingChange : result.player1RatingChange
+                            oldRating: isFirstPlayer ? player1User.rating : player2User.rating,
+                            newRating: isFirstPlayer ? result.player1NewRating : result.player2NewRating,
+                            opponentOldRating: isFirstPlayer ? player2User.rating : player1User.rating,
+                            opponentNewRating: isFirstPlayer ? result.player2NewRating : result.player1NewRating,
+                            myUsername: isFirstPlayer ? player1User.username : player2User.username,
+                            opponentUsername: isFirstPlayer ? player2User.username : player1User.username
                         };
 
-                        player.send(JSON.stringify(message));
-                    });
+                        if (player.readyState === WebSocket.OPEN) {
+                            player.send(JSON.stringify(message));
+                        }
+                    };
+
+                    // 各プレイヤーに1回だけ結果を送信
+                    sendResult(player1, true);
+                    sendResult(player2, false);
                 }
             }
 

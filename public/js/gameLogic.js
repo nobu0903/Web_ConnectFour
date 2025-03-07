@@ -124,19 +124,19 @@ export function initializeWebSocket(token = null) {
 
                 // プレイヤー情報を設定
                 if (data.isFirstPlayer) {
-                    resultPlayer1Name.textContent = "You";
-                    resultPlayer2Name.textContent = "Opponent";
-                    resultPlayer1Rating.textContent = `${data.newRating} (${data.ratingChange >= 0 ? '+' : ''}${data.ratingChange})`;
-                    resultPlayer1Rating.className = data.ratingChange >= 0 ? 'rating-increase' : 'rating-decrease';
-                    resultPlayer2Rating.textContent = `${data.opponentNewRating} (${data.opponentRatingChange >= 0 ? '+' : ''}${data.opponentRatingChange})`;
-                    resultPlayer2Rating.className = data.opponentRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer1Name.textContent = `You (${data.newRating - data.oldRating >= 0 ? '+' : ''}${data.newRating - data.oldRating})`;
+                    resultPlayer2Name.textContent = `Opponent (${data.opponentNewRating - data.opponentOldRating >= 0 ? '+' : ''}${data.opponentNewRating - data.opponentOldRating})`;
+                    resultPlayer1Rating.textContent = `${data.newRating}`;
+                    resultPlayer1Rating.className = (data.newRating - data.oldRating) >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.textContent = `${data.opponentNewRating}`;
+                    resultPlayer2Rating.className = (data.opponentNewRating - data.opponentOldRating) >= 0 ? 'rating-increase' : 'rating-decrease';
                 } else {
-                    resultPlayer1Name.textContent = "Opponent";
-                    resultPlayer2Name.textContent = "You";
-                    resultPlayer1Rating.textContent = `${data.opponentNewRating} (${data.opponentRatingChange >= 0 ? '+' : ''}${data.opponentRatingChange})`;
-                    resultPlayer1Rating.className = data.opponentRatingChange >= 0 ? 'rating-increase' : 'rating-decrease';
-                    resultPlayer2Rating.textContent = `${data.newRating} (${data.ratingChange >= 0 ? '+' : ''}${data.ratingChange})`;
-                    resultPlayer2Rating.className = data.ratingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer1Name.textContent = `Opponent (${data.opponentNewRating - data.opponentOldRating >= 0 ? '+' : ''}${data.opponentNewRating - data.opponentOldRating})`;
+                    resultPlayer2Name.textContent = `You (${data.newRating - data.oldRating >= 0 ? '+' : ''}${data.newRating - data.oldRating})`;
+                    resultPlayer1Rating.textContent = `${data.opponentNewRating}`;
+                    resultPlayer1Rating.className = (data.opponentNewRating - data.opponentOldRating) >= 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.textContent = `${data.newRating}`;
+                    resultPlayer2Rating.className = (data.newRating - data.oldRating) >= 0 ? 'rating-increase' : 'rating-decrease';
                 }
 
                 // 結果表示エリアを表示
