@@ -125,12 +125,12 @@ export function initializeWebSocket(token = null) {
                     resultPlayer1Name.textContent = "You";
                     resultPlayer2Name.textContent = "Opponent";
                     
-                    // レーティング変動を表示
+                    // レーティング変動を計算
                     const myRatingChange = data.myNewRating - data.myOldRating;
                     const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
                     
-                    resultPlayer1Rating.textContent = `${data.myNewRating} (${myRatingChange > 0 ? '+' : ''}${myRatingChange})`;
-                    resultPlayer2Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange > 0 ? '+' : ''}${opponentRatingChange})`;
+                    resultPlayer1Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
                     
                     // レーティング変動に応じてクラスを追加
                     resultPlayer1Rating.className = myRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
@@ -139,12 +139,12 @@ export function initializeWebSocket(token = null) {
                     resultPlayer1Name.textContent = "Opponent";
                     resultPlayer2Name.textContent = "You";
                     
-                    // レーティング変動を表示
+                    // レーティング変動を計算
                     const myRatingChange = data.myNewRating - data.myOldRating;
                     const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
                     
-                    resultPlayer1Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange})`;
-                    resultPlayer2Rating.textContent = `${data.myNewRating} (${myRatingChange})`;
+                    resultPlayer1Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
                     
                     // レーティング変動に応じてクラスを追加
                     resultPlayer1Rating.className = opponentRatingChange > 0 ? 'rating-increase' : 'rating-decrease';

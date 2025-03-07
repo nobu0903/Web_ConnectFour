@@ -47,7 +47,6 @@ function updateRankingTable(rankings) {
     tbody.innerHTML = '';
     rankings.forEach((user, index) => {
         const row = document.createElement('tr');
-        
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${user.username}</td>
