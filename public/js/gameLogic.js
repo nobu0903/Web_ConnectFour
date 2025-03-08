@@ -126,10 +126,10 @@ export function initializeWebSocket(token = null) {
                     resultPlayer2Name.textContent = "Opponent";
                     
                     // レーティング変動を計算
-                    const myRatingChange = data.myNewRating - data.myOldRating;
+                    const myRatingChange = data.newRating - data.oldRating;
                     const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
                     
-                    resultPlayer1Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    resultPlayer1Rating.textContent = `${data.newRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
                     resultPlayer2Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
                     
                     // レーティング変動に応じてクラスを追加
@@ -140,11 +140,11 @@ export function initializeWebSocket(token = null) {
                     resultPlayer2Name.textContent = "You";
                     
                     // レーティング変動を計算
-                    const myRatingChange = data.myNewRating - data.myOldRating;
+                    const myRatingChange = data.newRating - data.oldRating;
                     const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
                     
                     resultPlayer1Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
-                    resultPlayer2Rating.textContent = `${data.myNewRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.newRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
                     
                     // レーティング変動に応じてクラスを追加
                     resultPlayer1Rating.className = opponentRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
@@ -169,6 +169,13 @@ export function initializeWebSocket(token = null) {
                 const resultPlayer2Name = document.getElementById("result-player2-name");
                 const resultPlayer2Rating = document.getElementById("result-player2-rating-change");
 
+                console.log("レーティング情報:", {
+                    oldRating: data.oldRating,
+                    newRating: data.newRating,
+                    opponentOldRating: data.opponentOldRating,
+                    opponentNewRating: data.opponentNewRating
+                });
+
                 // 勝敗の表示を設定
                 if (data.result === 'win') {
                     document.querySelector('.game-result h3').textContent = 'You win!';
@@ -179,9 +186,31 @@ export function initializeWebSocket(token = null) {
                 }
 
                 // プレイヤー情報を設定
-                resultPlayer1Name.textContent = "あなた";
-                resultPlayer1Rating.textContent = `${data.newRating} (${data.ratingChange >= 0 ? '+' : ''}${data.ratingChange})`;
-                resultPlayer1Rating.className = data.ratingChange >= 0 ? 'rating-increase' : 'rating-decrease';
+                if (data.isFirstPlayer) {
+                    resultPlayer1Name.textContent = "You";
+                    resultPlayer2Name.textContent = "Opponent";
+                    
+                    const myRatingChange = data.newRating - data.oldRating;
+                    const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
+                    
+                    resultPlayer1Rating.textContent = `${data.newRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
+                    
+                    resultPlayer1Rating.className = myRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.className = opponentRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
+                } else {
+                    resultPlayer1Name.textContent = "Opponent";
+                    resultPlayer2Name.textContent = "You";
+                    
+                    const myRatingChange = data.newRating - data.oldRating;
+                    const opponentRatingChange = data.opponentNewRating - data.opponentOldRating;
+                    
+                    resultPlayer1Rating.textContent = `${data.opponentNewRating} (${opponentRatingChange >= 0 ? '+' : ''}${opponentRatingChange})`;
+                    resultPlayer2Rating.textContent = `${data.newRating} (${myRatingChange >= 0 ? '+' : ''}${myRatingChange})`;
+                    
+                    resultPlayer1Rating.className = opponentRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
+                    resultPlayer2Rating.className = myRatingChange > 0 ? 'rating-increase' : 'rating-decrease';
+                }
 
                 // 結果表示エリアを表示
                 gameResult.style.display = "block";
