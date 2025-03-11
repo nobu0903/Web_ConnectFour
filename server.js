@@ -373,7 +373,7 @@ let lastPingTime = new Map();
 wss.on('connection', async (ws, req) => {
     // 接続時のタイムスタンプを記録
     const connectionStartTime = Date.now();
-    console.log(`新しい接続を受信 (${connectionStartTime})`);
+    console.log(`新規接続: ${connectionStartTime}`);
 
     // Pingインターバルの設定
     const pingInterval = setInterval(() => {
@@ -386,15 +386,16 @@ wss.on('connection', async (ws, req) => {
 
     ws.on('pong', () => {
         const latency = Date.now() - lastPingTime.get(ws);
-        console.log(`WebSocket接続レイテンシ: ${latency}ms`);
+        if (latency > 1000) { // レイテンシが1秒以上の場合のみログ出力
+            console.log(`高レイテンシ検出: ${latency}ms`);
+        }
     });
 
     ws.on('close', () => {
         clearInterval(pingInterval);
         lastPingTime.delete(ws);
-        console.log("プレイヤーが切断。プレイヤーID:", ws.userId);
         if (waitingPlayer === ws) {
-            console.log("待機プレイヤーが切断したため、待機キューをリセット");
+            console.log("待機プレイヤー切断: キューリセット");
             waitingPlayer = null;
         }
         // 部屋からプレイヤーを削除
@@ -402,11 +403,7 @@ wss.on('connection', async (ws, req) => {
             const room = rooms[roomId];
             const wasInRoom = room.players.includes(ws);
             room.players = room.players.filter(player => player !== ws);
-            if (wasInRoom) {
-                console.log(`プレイヤー(${ws.userId})をルーム${roomId}から削除`);
-            }
             if (room.players.length === 0) {
-                console.log(`ルーム${roomId}を削除（プレイヤーが不在）`);
                 delete rooms[roomId];
             }
         }
@@ -417,35 +414,22 @@ wss.on('connection', async (ws, req) => {
     const user = await authenticateConnection(token);
     
     if (!user) {
-        console.log("認証失敗: トークンが無効です");
+        console.log("認証失敗");
         ws.close();
         return;
     }
     
-    console.log("認証成功。ユーザーID:", user._id);
     ws.userId = user._id;
     ws.rating = user.rating;
-    ws.username = user.username;  // ユーザーネームを保存
+    ws.username = user.username;
 
     ws.on("message", async (message) => {
         try {
             const data = JSON.parse(message);
-            console.log("受信したメッセージ:", data);
 
             if (data.type === "findMatch") {
-                console.log("マッチング要求を受信。現在の待機プレイヤー状態:");
-                console.log("- 待機プレイヤー存在:", waitingPlayer !== null);
-                if (waitingPlayer) {
-                    console.log("- 待機プレイヤーID:", waitingPlayer.userId);
-                    console.log("- 待機プレイヤーユーザーネーム:", waitingPlayer.username);
-                    console.log("- 要求元プレイヤーID:", ws.userId);
-                    console.log("- 要求元プレイヤーユーザーネーム:", ws.username);
-                }
-                
                 if (waitingPlayer === null) {
-                    // 待機プレイヤーがいないなら、待機状態にする
                     waitingPlayer = ws;
-                    console.log("プレイヤーをマッチング待機状態に設定。プレイヤーID:", ws.userId);
                     
                     // カウントダウン開始時刻を記録
                     const startTime = Date.now();
@@ -468,13 +452,11 @@ wss.on('connection', async (ws, req) => {
                     
                     // 30秒後にコンピューターとマッチング
                     setTimeout(() => {
-                        clearInterval(countdownInterval); // カウントダウンを停止
+                        clearInterval(countdownInterval);
                         
                         if (waitingPlayer === ws) {
-                            console.log("30秒経過: コンピューターとマッチング");
                             const computerPlayer = new ComputerPlayer();
                             
-                            // コンピューターの手を受け取った時の処理
                             computerPlayer.onMove = (moveData) => {
                                 if (rooms[moveData.roomId]) {
                                     rooms[moveData.roomId].players.forEach((client) => {
@@ -497,7 +479,6 @@ wss.on('connection', async (ws, req) => {
                             
                             waitingPlayer = null;
                             
-                            // プレイヤーにゲーム開始を通知
                             ws.send(JSON.stringify({
                                 type: "gameStart",
                                 roomId,
@@ -510,7 +491,6 @@ wss.on('connection', async (ws, req) => {
                                 isComputerOpponent: true
                             }));
                             
-                            // コンピューターにゲーム開始を通知
                             computerPlayer.send(JSON.stringify({
                                 type: "gameStart",
                                 roomId,
@@ -522,12 +502,10 @@ wss.on('connection', async (ws, req) => {
                                 opponentUsername: ws.username
                             }));
                         }
-                    }, 30000); // 30秒待機
+                    }, 30000);
                 } else if (waitingPlayer !== ws) {
-                    // すでに待機しているプレイヤーがいるなら、マッチング
                     const player1 = waitingPlayer;
                     const player2 = ws;
-                    console.log("マッチング成立。プレイヤー1:", player1.userId, "プレイヤー2:", player2.userId);
                     
                     waitingPlayer = null;
 
@@ -537,41 +515,31 @@ wss.on('connection', async (ws, req) => {
                         userIds: [player1.userId, player2.userId]
                     };
 
-                    console.log("新しいルームを作成:", roomId);
-                    console.log("ルーム情報:", rooms[roomId]);
-
-                    // 先手後手を設定（player1が先手）
                     const [firstPlayer, secondPlayer] = [player1, player2];
-                    console.log("先手プレイヤー:", firstPlayer.userId);
-                    console.log("後手プレイヤー:", secondPlayer.userId);
 
                     try {
                         firstPlayer.send(JSON.stringify({ 
                             type: "gameStart", 
                             roomId, 
                             playerNumber: 1,
-                            isFirstMove: true,  // 先手なのでtrue
+                            isFirstMove: true,
                             rating: firstPlayer.rating,
                             opponentRating: secondPlayer.rating,
                             myUsername: firstPlayer.username,
                             opponentUsername: secondPlayer.username
                         }));
-                        console.log("先手プレイヤーにメッセージを送信");
 
                         secondPlayer.send(JSON.stringify({ 
                             type: "gameStart", 
                             roomId, 
                             playerNumber: 2,
-                            isFirstMove: false,  // 後手なのでfalse
+                            isFirstMove: false,
                             rating: secondPlayer.rating,
                             opponentRating: firstPlayer.rating,
                             myUsername: secondPlayer.username,
                             opponentUsername: firstPlayer.username
                         }));
-                        console.log("後手プレイヤーにメッセージを送信");
                     } catch (error) {
-                        console.error("プレイヤーへのメッセージ送信中にエラー:", error);
-                        // エラーが発生した場合、ルームをクリーンアップ
                         delete rooms[roomId];
                         waitingPlayer = null;
                     }
@@ -581,39 +549,23 @@ wss.on('connection', async (ws, req) => {
             if (data.type === 'gameEnd') {
                 const room = rooms[data.roomId];
                 if (room) {
-                    // コンピューター対戦の場合の特別処理
                     if (room.userIds.includes('computer')) {
                         const humanPlayerId = room.userIds.find(id => id !== 'computer');
                         const humanPlayer = await User.findById(humanPlayerId);
                         
                         if (humanPlayer) {
-                            // レーティング変動の計算（コンピューター対戦用）
-                            const computerRating = 1500; // コンピューターの固定レーティング
+                            const computerRating = 1500;
                             const oldRating = humanPlayer.rating;
-                            
-                            // 勝敗に応じてレーティングを更新（redの場合は必ず人間の勝ち）
                             const isHumanWinner = data.isDraw ? false : (data.winner === 'red');
                             
-                            console.log('レーティング計算情報:', {
-                                humanRating: oldRating,
-                                computerRating,
-                                isHumanWinner,
-                                winner: data.winner,
-                                isDraw: data.isDraw
-                            });
-                            
-                            // レーティング変動の倍率を設定（コンピューター対戦用）
                             const ratings = calculateNewRatings(oldRating, computerRating, isHumanWinner);
-                            const ratingMultiplier = 1.0; // レーティング変動を2倍に
+                            const ratingMultiplier = 1.0;
                             const ratingChange = (ratings.player1NewRating - oldRating) * ratingMultiplier;
                             humanPlayer.rating = Math.round(oldRating + ratingChange);
                             
                             await humanPlayer.save();
-                            
-                            // ランキングキャッシュをクリア
                             clearRankingsCache();
                             
-                            // 結果を通知
                             ws.send(JSON.stringify({
                                 type: 'gameResult',
                                 result: data.isDraw ? 'draw' : (isHumanWinner ? 'win' : 'loss'),
@@ -626,7 +578,6 @@ wss.on('connection', async (ws, req) => {
                             }));
                         }
                     } else {
-                        // 通常の人間同士の対戦の場合（既存のコード）
                         const player1 = await User.findById(room.userIds[0]);
                         const player2 = await User.findById(room.userIds[1]);
                         
@@ -634,7 +585,6 @@ wss.on('connection', async (ws, req) => {
                         if (data.isDraw) {
                             result = 'draw';
                         } else {
-                            // 勝者判定を修正
                             const isCurrentPlayerWinner = (data.winner === 'red' && room.players[0] === ws) ||
                                                        (data.winner === 'yellow' && room.players[1] === ws);
                             result = isCurrentPlayerWinner ? 'win' : 'loss';
@@ -664,7 +614,6 @@ wss.on('connection', async (ws, req) => {
                             if (data.isDraw) {
                                 playerResult = 'draw';
                             } else {
-                                // 各プレイヤーの勝敗判定を修正
                                 const isWinner = (data.winner === 'red' && index === 0) ||
                                                 (data.winner === 'yellow' && index === 1);
                                 playerResult = isWinner ? 'win' : 'loss';
@@ -690,13 +639,11 @@ wss.on('connection', async (ws, req) => {
 
             if (data.type === 'move') {
                 const roomId = data.roomId;
-                console.log('動きが受信されました:', data.move, 'ルームID:', roomId);
                 
                 if (rooms[roomId]) {
                     rooms[roomId].players.forEach((client) => {
                         if (client !== ws) {
                             if (client.isComputer) {
-                                // コンピューターの場合、1秒後に応答
                                 setTimeout(() => {
                                     const computerMove = client.calculateMove(data.board || [...Array(6)].map(() => Array(7).fill(null)));
                                     client._onMove({
@@ -717,7 +664,7 @@ wss.on('connection', async (ws, req) => {
                 }
             }
         } catch (error) {
-            console.error("メッセージ処理中にエラー:", error);
+            console.error("メッセージ処理エラー:", error.message);
         }
     });
 });
@@ -752,14 +699,11 @@ const MONITOR_INTERVAL = 14 * 60 * 1000; // 14分
 setInterval(() => {
     const uptime = process.uptime();
     const memoryUsage = process.memoryUsage();
-    const currentTime = new Date().toISOString();
     
-    console.log('=== サーバー状態レポート ===');
-    console.log(`現在時刻: ${currentTime}`);//should be 14mins for interval time
-    console.log(`サーバー起動時間: ${new Date(serverStartTime).toISOString()}`);//should be 14mins for interval time
-    console.log(`稼働時間: ${Math.floor(uptime)}秒 (${Math.floor(uptime / 60)}分)`);//should be 60*14=840
-    console.log(`メモリ使用量: ${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`);
-    console.log('========================');
+    console.log('=== サーバー状態 ===');
+    console.log(`稼働時間: ${Math.floor(uptime / 60)}分`);
+    console.log(`メモリ使用: ${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`);
+    console.log('==================');
 }, MONITOR_INTERVAL);
 
 // 初回のログを即時出力
