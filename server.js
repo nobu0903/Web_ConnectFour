@@ -554,12 +554,12 @@ wss.on('connection', async (ws, req) => {
                         const humanPlayer = await User.findById(humanPlayerId);
                         
                         if (humanPlayer) {
-                            const computerRating = 1500;
+                            const computerRating = 1500;  
                             const oldRating = humanPlayer.rating;
                             const isHumanWinner = data.isDraw ? false : (data.winner === 'red');
                             
                             const ratings = calculateNewRatings(oldRating, computerRating, isHumanWinner);
-                            const ratingMultiplier = 1.0;
+                            const ratingMultiplier = 2.0;  // レート変動の倍率を2.0に設定
                             const ratingChange = (ratings.player1NewRating - oldRating) * ratingMultiplier;
                             humanPlayer.rating = Math.round(oldRating + ratingChange);
                             

@@ -1,6 +1,23 @@
 // Eloレーティングの計算
-export function calculateNewRatings(player1Rating, player2Rating, result) {
-    const K =   128; // レーティング変動の係数
+export function calculateNewRatings(player1Rating, player2Rating, result, isComputerMatch = false) {
+    // レート差に応じてK値を調整
+    const ratingDiff = Math.abs(player1Rating - player2Rating);
+    let K;
+    
+    if (isComputerMatch) {
+        // コンピューター対戦時は固定のK値を使用
+        K = 32;
+    } else {
+        // レート差に応じてK値を調整
+        if (ratingDiff < 200) {
+            K = 32; // レート差が小さい場合は標準的な変動
+        } else if (ratingDiff < 400) {
+            K = 24; // レート差が中程度の場合は控えめな変動
+        } else {
+            K = 16; // レート差が大きい場合は小さな変動
+        }
+    }
+
     const expectedScore1 = 1 / (1 + Math.pow(10, (player2Rating - player1Rating) / 400));
     const expectedScore2 = 1 - expectedScore1;
 
