@@ -6,15 +6,15 @@ export function calculateNewRatings(player1Rating, player2Rating, result, isComp
     
     if (isComputerMatch) {
         // コンピューター対戦時は固定のK値を使用
-        K = 32;
+        K = 64;
     } else {
         // レート差に応じてK値を調整
         if (ratingDiff < 200) {
-            K = 32; // レート差が小さい場合は標準的な変動
+            K = 64; // レート差が小さい場合は標準的な変動
         } else if (ratingDiff < 400) {
-            K = 24; // レート差が中程度の場合は控えめな変動
+            K = 64; // レート差が中程度の場合は控えめな変動
         } else {
-            K = 16; // レート差が大きい場合は小さな変動
+            K = 64; // レート差が大きい場合は小さな変動
         }
     }
 
