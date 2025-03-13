@@ -554,14 +554,24 @@ wss.on('connection', async (ws, req) => {
                         const humanPlayer = await User.findById(humanPlayerId);
                         
                         if (humanPlayer) {
-                            const computerRating = 1500;  
+                            const computerRating = 1200;  // コンピューターの基準レートを下げる
                             const oldRating = humanPlayer.rating;
                             const isHumanWinner = data.isDraw ? false : (data.winner === 'red');
                             
-                            const ratings = calculateNewRatings(oldRating, computerRating, isHumanWinner);
-                            const ratingMultiplier = 2.0;  // レート変動の倍率を2.0に設定
+                            // コンピューター対戦用のフラグをtrueで渡す
+                            const ratings = calculateNewRatings(oldRating, computerRating, isHumanWinner, true);
+                            
+                            // レート変動の倍率を増加
+                            const ratingMultiplier = 1.5;  // 1.0から1.5に増加
                             const ratingChange = (ratings.player1NewRating - oldRating) * ratingMultiplier;
-                            humanPlayer.rating = Math.round(oldRating + ratingChange);
+                            
+                            // 最小変動幅を設定
+                            const minChange = isHumanWinner ? 15 : -25;  // 勝利時最小+15、敗北時最小-25
+                            const finalRatingChange = isHumanWinner 
+                                ? Math.max(ratingChange, minChange)
+                                : Math.min(ratingChange, minChange);
+                            
+                            humanPlayer.rating = Math.round(oldRating + finalRatingChange);
                             
                             await humanPlayer.save();
                             clearRankingsCache();
