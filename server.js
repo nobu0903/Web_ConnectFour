@@ -474,7 +474,8 @@ wss.on('connection', async (ws, req) => {
                             const roomId = Math.random().toString(36).substr(2, 6);
                             rooms[roomId] = {
                                 players: [ws, computerPlayer],
-                                userIds: [ws.userId, 'computer']
+                                userIds: [ws.userId, 'computer'],
+                                isProcessed: false
                             };
                             
                             waitingPlayer = null;
@@ -512,7 +513,8 @@ wss.on('connection', async (ws, req) => {
                     const roomId = Math.random().toString(36).substr(2, 6);
                     rooms[roomId] = {
                         players: [player1, player2],
-                        userIds: [player1.userId, player2.userId]
+                        userIds: [player1.userId, player2.userId],
+                        isProcessed: false
                     };
 
                     const [firstPlayer, secondPlayer] = [player1, player2];
@@ -548,7 +550,9 @@ wss.on('connection', async (ws, req) => {
 
             if (data.type === 'gameEnd') {
                 const room = rooms[data.roomId];
-                if (room) {
+                if (room && !room.isProcessed) {  // 処理済みフラグをチェック
+                    room.isProcessed = true;  // 処理済みとしてマーク
+                    
                     if (room.userIds.includes('computer')) {
                         const humanPlayerId = room.userIds.find(id => id !== 'computer');
                         const humanPlayer = await User.findById(humanPlayerId);
