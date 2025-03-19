@@ -59,7 +59,7 @@
 
 
 #board {
-    display: grid;
+    display:grid ;
     grid-template-columns: repeat(7, 60px);
     grid-template-rows: repeat(6, 60px);
     gap: 5px;
@@ -68,84 +68,25 @@
     border-radius: 10px;
     width: 90%;
     margin: auto;
-    max-width: 600px;
-    aspect-ratio: 7 / 6;
+    max-width: 600px;   /* 最大サイズを決める */
+    aspect-ratio: 7 / 6; /* ボードの比率を固定 */
+    /* セルの大きさを自動調整 */
     grid-template-columns: repeat(7, minmax(0, 1fr));
     grid-template-rows: repeat(6, minmax(0, 1fr));
     gap: 5px;
 }
 
-/* 駒のアニメーション */
-@keyframes dropPiece {
-    0% {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.piece {
-    position: absolute;
-    width: 80%;
-    height: 80%;
-    border-radius: 50%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    animation: dropPiece 0.5s ease-out forwards;
-    z-index: 1;
-    will-change: transform, opacity;
-    transform: translateY(-100%);
-    opacity: 0;
-}
-
 .cell {
-    width: 80px;
-    height: 80px;
-    border: 2px solid #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #fff;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-
-.cell.red, .cell.yellow {
-    background-color: transparent;
-}
-
-.cell.red .piece {
-    background-color: red;
-}
-
-.cell.yellow .piece {
-    background-color: yellow;
-}
-
-/* 駒の色の設定 */
-.cell.red::before, .cell.yellow::before {
-    content: '';
-    position: absolute;
-    width: 80%;
-    height: 80%;
+    width: 100%;  /* 画面幅に応じて縮小 */
+    height: 100%; /* 縦横サイズを統一 */
+    background-color: white;
     border-radius: 50%;
-    background-color: inherit;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    animation: dropPiece 0.5s ease-out;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 1); /* 影の効果 */
+    transition: transform 0.2s; /* アニメーション効果 */
 }
-
-/* 駒の色の設定 */
-.cell.red::before {
-    background-color: red;
-}
-
-.cell.yellow::before {
-    background-color: yellow;
-}
-
 /*駒の色の設定*/
 .red {
     background: red; /* グラデーション */
@@ -263,76 +204,3 @@
   flex-direction: column;
   align-items: center; /* ボードを中央揃え */
 }
-
-/* マッチング画面のスタイル */
-.match-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.match-content {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.player-info {
-    display: flex;
-    align-items: center;
-    margin: 1rem 0;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 10px;
-}
-
-.player-avatar {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    margin-right: 1rem;
-    background-color: #e9ecef;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-}
-
-.player-details {
-    text-align: left;
-}
-
-.player-name {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-}
-
-.player-rating {
-    color: #6c757d;
-    font-size: 0.9rem;
-}
-
-.vs-text {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #dc3545;
-    margin: 1rem 0;
-}
-
-.match-status {
-    font-size: 1.2rem;
-    color: #28a745;
-    margin-top: 1rem;
-    font-weight: bold;
-}
-
