@@ -59,7 +59,7 @@
 
 
 #board {
-    display: grid;
+    display:grid ;
     grid-template-columns: repeat(7, 60px);
     grid-template-rows: repeat(6, 60px);
     gap: 5px;
@@ -68,66 +68,25 @@
     border-radius: 10px;
     width: 90%;
     margin: auto;
-    max-width: 600px;
-    aspect-ratio: 7 / 6;
+    max-width: 600px;   /* 最大サイズを決める */
+    aspect-ratio: 7 / 6; /* ボードの比率を固定 */
+    /* セルの大きさを自動調整 */
     grid-template-columns: repeat(7, minmax(0, 1fr));
     grid-template-rows: repeat(6, minmax(0, 1fr));
     gap: 5px;
 }
 
-/* 駒のアニメーション */
-@keyframes dropPiece {
-    0% {
-        transform: translateY(0);
-        opacity: 0;
-    }
-    100% {
-        transform: translateY(100%);
-        opacity: 1;
-    }
-}
-
-.piece {
-    position: absolute;
-    width: 80%;
-    height: 80%;
-    border-radius: 50%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    animation: dropPiece 0.5s ease-out forwards;
-    z-index: 1;
-    will-change: transform;
-    transform-origin: center top;
-    top: -100%;
-    left: 10%;
-}
-
 .cell {
-    width: 100%;
-    height: 100%;
-    background-color: #007bff;
+    width: 100%;  /* 画面幅に応じて縮小 */
+    height: 100%; /* 縦横サイズを統一 */
+    background-color: white;
     border-radius: 50%;
-    margin: 5px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
-    display: flex;
+    display:flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 1); /* 影の効果 */
+    transition: transform 0.2s; /* アニメーション効果 */
 }
-
-.cell.red, .cell.yellow {
-    background-color: transparent;
-}
-
-.cell.red .piece {
-    background-color: red;
-}
-
-.cell.yellow .piece {
-    background-color: yellow;
-}
-
 /*駒の色の設定*/
 .red {
     background: red; /* グラデーション */
