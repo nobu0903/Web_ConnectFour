@@ -258,22 +258,44 @@ export function dropPiece(col, isOpponentMove = false) {
             gameState.virtualBoard[row][col] = gameState.currentPlayer; // virtualBoardも更新
             const lastPlayer = gameState.currentPlayer; // 最後に置いたプレイヤーの色を保持
             
-            // 勝者の判定
-            if (checkWinner(row, col, lastPlayer)) {
-                gameState.setWinner(gameState.currentPlayer);
-                console.log(`${lastPlayer} win!!`);
+            console.log("駒の作成を開始します");
+            const piece = document.createElement('div');
+            console.log("駒が作成されました:", piece);
+            piece.className = 'piece';
+            piece.style.backgroundColor = gameState.currentPlayer;
+            
+            // セルに駒を追加
+            cell.appendChild(piece);
+            
+            // アニメーション終了後にクラスを設定
+            piece.addEventListener('animationend', () => {
+                cell.classList.add(gameState.currentPlayer);
+                piece.remove();
+                gameState.virtualBoard[row][col] = gameState.currentPlayer;
                 
-                // オンラインモードの場合、サーバーにゲーム終了を通知
-                if (gameState.mode === "play-in-online" && socket && socket.readyState === WebSocket.OPEN) {
-                    const message = {
-                        type: "gameEnd",
-                        roomId: gameState.currentRoomId,
-                        winner: lastPlayer,
-                        result: 'win'  // 勝利の場合
-                    };
-                    console.log("ゲーム終了メッセージを送信:", message);
-                    socket.send(JSON.stringify(message));
+                // 勝者チェック
+                if (checkWinner(row, col, gameState.currentPlayer)) {
+                    gameState.winner = gameState.currentPlayer;
+                    console.log("勝者が決まりました:", gameState.winner);
+                    return;
                 }
+                
+                // プレイヤーを切り替え
+                gameState.currentPlayer = gameState.currentPlayer === 'red' ? 'yellow' : 'red';
+                updateTurn(gameState.currentPlayer);
+                
+                // オンラインモードの場合、相手に手を送信
+                if (gameState.mode === "play-in-online") {
+                    sendMove({ col: col });
+                }
+            });
+            
+            // 勝者が決まった場合の処理
+            if (gameState.winner) {
+                return;
+            }
+            else if (gameState.currentPlayer === 'yellow' && (gameState.mode === 'play-with-smart-computer-level1' || gameState.mode === 'play-with-smart-computer-level2' || gameState.mode === 'play-with-smart-computer-level3')) {
+                smartComputerTurn(); // コンピューターのターン
             }
             break;
         }
@@ -322,14 +344,6 @@ export function dropPiece(col, isOpponentMove = false) {
         gameState.switchPlayer();
         gameState.setMyTurn(true); // 自分のターンを開始
         updateTurn(gameState.currentPlayer);
-    }
-    
-    // 勝者が決まった場合の処理
-    if (gameState.winner) {
-        return;
-    }
-    else if (gameState.currentPlayer === 'yellow' && (gameState.mode === 'play-with-smart-computer-level1' || gameState.mode === 'play-with-smart-computer-level2' || gameState.mode === 'play-with-smart-computer-level3')) {
-        smartComputerTurn(); // コンピューターのターン
     }
 }
 
