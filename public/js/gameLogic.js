@@ -43,55 +43,7 @@ export function initializeWebSocket(token = null) {
             
             if (data.type === "gameStart") {
                 console.log("ゲーム開始メッセージを受信:", data);
-                
-                // 最初にゲームの状態をリセット
-                resetBoard();
-                gameState.resetCurrentPlayer();
-                gameState.resetModePlayInOnline();
-                
-                // ルームIDを設定
-                gameState.setCurrentRoomId(data.roomId);
-                console.log("設定されたルームID:", data.roomId);
-                
-                // 先手後手の設定
-                gameState.setMyTurn(data.isFirstMove);
-                console.log("自分のターン:", data.isFirstMove);
-
-                // レーティング表示を更新
-                const ratingDisplay = document.getElementById("rating-display");
-                const player1Name = document.getElementById("player1-name");
-                const player1Rating = document.getElementById("player1-rating");
-                const player2Name = document.getElementById("player2-name");
-                const player2Rating = document.getElementById("player2-rating");
-
-                const myRating = data.rating;
-                const opponentRating = data.opponentRating;
-                const myUsername = data.myUsername;
-                const opponentUsername = data.opponentUsername;
-
-                console.log("レーティング情報:", { myRating, opponentRating });
-                console.log("ユーザー情報:", { myUsername, opponentUsername });
-
-                if (data.isFirstMove) {
-                    player1Name.textContent = `あなた (${myUsername})`;
-                    player1Rating.textContent = `Rating: ${myRating}`;
-                    player2Name.textContent = `対戦相手 (${opponentUsername})`;
-                    player2Rating.textContent = `Rating: ${opponentRating}`;
-                } else {
-                    player1Name.textContent = `対戦相手 (${opponentUsername})`;
-                    player1Rating.textContent = `Rating: ${opponentRating}`;
-                    player2Name.textContent = `あなた (${myUsername})`;
-                    player2Rating.textContent = `Rating: ${myRating}`;
-                }
-                ratingDisplay.style.display = "flex";
-                
-                const gameStatus = document.getElementById("gameStatus");
-                gameStatus.textContent = `Game start!${data.isFirstMove ? '（First Move）' : '（Second Move）'}`;
-                gameStatus.style.display = "block";
-                
-                // ターンインジケーターを表示
-                document.getElementById("turnIndicator").style.display = "block";
-                updateTurn(gameState.currentPlayer);
+                showMatchScreen(data);
             } else if (data.type === "move") {
                 console.log("moveメッセージを受信。ルームID:", data.roomId, "現在のルームID:", gameState.currentRoomId);
                 if (data.roomId === gameState.currentRoomId) {
@@ -225,76 +177,128 @@ export function initializeWebSocket(token = null) {
 
 // 駒を落とす関数
 export function dropPiece(col, isOpponentMove = false) {
-    if (gameState.winner) 
-        return; // 勝者が決まっている場合は処理を終了
+    console.log("=== dropPiece関数開始 ===");
+    console.log("引数 - col:", col, "isOpponentMove:", isOpponentMove);
+    
+    if (gameState.winner) {
+        console.log("勝者が決まっているため、処理を終了");
+        return;
+    }
 
     // オンラインモードの場合のみ手番チェックを行う
     if (gameState.mode === "play-in-online") {
-    if (!isOpponentMove && !gameState.isMyTurn) {
-        console.log("相手のターンです");
-        return;
+        if (!isOpponentMove && !gameState.isMyTurn) {
+            console.log("相手のターンです");
+            return;
         }
     }
 
     console.log("駒を落とす処理開始:", col);
     console.log("現在のプレイヤー:", gameState.currentPlayer);
 
-    for (let row = 5; row >= 0; row--) { // 下から上に向かって探す
-        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+    // 列が満杯かチェック
+    if (isColumnFull(col)) {
+        console.log("列が満杯です:", col);
+        alert('Error: This column is already full. \nPlease choose another one');
+        return;
+    }
+
+    // 空のセルを探す
+    console.log("空のセルを探します");
+    for (let row = 5; row >= 0; row--) {
+        const cellSelector = `.cell[data-row="${row}"][data-col="${col}"]`;
+        console.log("セルを検索:", cellSelector);
+        const cell = document.querySelector(cellSelector);
+        
         if (!cell) {
             console.log("セルが見つかりません:", row, col);
             continue;
         }
 
-        if (isColumnFull(col)) {
-            console.log("列が満杯です:", col);
-            alert('Error: This column is already full. \nPlease choose another one');
-            return; // 列が埋まっている場合は処理を終了
-        }
+        console.log("セルが見つかりました:", {
+            row: row,
+            col: col,
+            classList: cell.classList.toString(),
+            hasRed: cell.classList.contains('red'),
+            hasYellow: cell.classList.contains('yellow'),
+            children: cell.children.length
+        });
 
-        if (!cell.classList.contains('red') && !cell.classList.contains('yellow')) { // 空のセルを探す
-            console.log("空のセルが見つかりました:", row, col);
-            cell.classList.add(gameState.currentPlayer); // 現在のプレイヤーの色を追加
-            gameState.virtualBoard[row][col] = gameState.currentPlayer; // virtualBoardも更新
-            const lastPlayer = gameState.currentPlayer; // 最後に置いたプレイヤーの色を保持
+        // 条件分岐の前
+        console.log("条件チェック前:", {
+            cell: cell,
+            classList: cell.classList.toString()
+        });
+
+        if (!cell.classList.contains('red') && !cell.classList.contains('yellow')) {
+            console.log("テスト");
+            // 条件分岐の中
+            console.log("条件分岐の中");
             
-            // 勝者の判定
-            if (checkWinner(row, col, lastPlayer)) {
-                gameState.setWinner(gameState.currentPlayer);
-                console.log(`${lastPlayer} win!!`);
+            try {
+                // try-catchの中
+                console.log("try-catchの中");
+                console.log("駒の作成を開始します");
+                const piece = document.createElement('div');
+                console.log("駒が作成されました:", piece);
+                piece.className = 'piece';
+                piece.style.backgroundColor = gameState.currentPlayer;
+                piece.style.position = 'absolute';
+                piece.style.left = '0';
+                piece.style.width = '100%';
+                piece.style.height = '100%';
+                piece.style.borderRadius = '50%';
+                piece.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
                 
-                // オンラインモードの場合、サーバーにゲーム終了を通知
-                if (gameState.mode === "play-in-online" && socket && socket.readyState === WebSocket.OPEN) {
-                    const message = {
-                        type: "gameEnd",
-                        roomId: gameState.currentRoomId,
-                        winner: lastPlayer,
-                        result: 'win'  // 勝利の場合
-                    };
-                    console.log("ゲーム終了メッセージを送信:", message);
-                    socket.send(JSON.stringify(message));
-                }
+                // セルに駒を追加
+                cell.appendChild(piece);
+                
+                // アニメーション終了後にクラスを設定
+                piece.addEventListener('animationend', () => {
+                    cell.classList.add(gameState.currentPlayer);
+                    piece.remove();
+                    gameState.virtualBoard[row][col] = gameState.currentPlayer;
+                    
+                    // 勝者の判定
+                    if (checkWinner(row, col, gameState.currentPlayer)) {
+                        gameState.setWinner(gameState.currentPlayer);
+                        console.log(`${gameState.currentPlayer} win!!`);
+                        
+                        if (gameState.mode === "play-in-online" && socket && socket.readyState === WebSocket.OPEN) {
+                            const message = {
+                                type: "gameEnd",
+                                roomId: gameState.currentRoomId,
+                                winner: gameState.currentPlayer,
+                                result: 'win'
+                            };
+                            console.log("ゲーム終了メッセージを送信:", message);
+                            socket.send(JSON.stringify(message));
+                        }
+                    }
+                });
+
+                // 駒の追加が成功したら、ここでbreakする
+                break;
+            } catch (error) {
+                console.error("=== エラー発生 ===", error);
             }
-            break;
         }
     }
     
     // プレイヤーのターンを交代
     if (!isOpponentMove) {
-        // 自分の手番の場合
         gameState.switchPlayer();
-        gameState.setMyTurn(false); // 自分のターンを終了
+        gameState.setMyTurn(false);
         updateTurn(gameState.currentPlayer);
         
-        // サーバーに動きを送信
-        if (!isOpponentMove && socket && socket.readyState === WebSocket.OPEN) {
-        const message = { 
-            type: "move", 
-            move: { col }, 
-            roomId: gameState.currentRoomId 
-        };
-        console.log("送信するメッセージ:", message);
-        socket.send(JSON.stringify(message));
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            const message = { 
+                type: "move", 
+                move: { col }, 
+                roomId: gameState.currentRoomId 
+            };
+            console.log("送信するメッセージ:", message);
+            socket.send(JSON.stringify(message));
             
             // 引き分けチェック
             let isBoardFull = true;
@@ -305,32 +309,32 @@ export function dropPiece(col, isOpponentMove = false) {
                 }
             }
             
-            // 盤面が埋まっていて勝者がいない場合は引き分け
             if (isBoardFull && !gameState.winner && gameState.mode === "play-in-online") {
                 const message = {
                     type: "gameEnd",
                     roomId: gameState.currentRoomId,
                     isDraw: true,
-                    result: 'draw'  // 引き分けの場合
+                    result: 'draw'
                 };
                 console.log("引き分けメッセージを送信:", message);
                 socket.send(JSON.stringify(message));
             }
         }
     } else {
-        // 相手の手番の場合
         gameState.switchPlayer();
-        gameState.setMyTurn(true); // 自分のターンを開始
+        gameState.setMyTurn(true);
         updateTurn(gameState.currentPlayer);
     }
     
-    // 勝者が決まった場合の処理
     if (gameState.winner) {
         return;
     }
     else if (gameState.currentPlayer === 'yellow' && (gameState.mode === 'play-with-smart-computer-level1' || gameState.mode === 'play-with-smart-computer-level2' || gameState.mode === 'play-with-smart-computer-level3')) {
-        smartComputerTurn(); // コンピューターのターン
+        smartComputerTurn();
     }
+
+    // 条件分岐の後
+    console.log("条件チェック後");
 }
 
 export function checkWinner(row, col, lastPlayer) {
@@ -531,18 +535,29 @@ function sendMove(move) {
 
 // 各列のボタンにクリックイベントを追加する関数
 export function initializeColumnButtons() {
+    console.log("=== 列ボタンの初期化開始 ===");
     const columnButtons = document.querySelectorAll('.column-button');
+    console.log("列ボタンの数:", columnButtons.length);
+    
     columnButtons.forEach(button => {
         button.addEventListener('click', () => {
-            if (gameState.winner) return;
+            console.log("列ボタンがクリックされました");
+            if (gameState.winner) {
+                console.log("勝者が決まっているため、処理をスキップ");
+                return;
+            }
             const col = button.dataset.col;
+            console.log("選択された列:", col);
             dropPiece(col);
         });
     });
+    console.log("=== 列ボタンの初期化完了 ===");
 }
 
 // 初期化関数を呼び出し
+console.log("列ボタンの初期化を開始します");
 initializeColumnButtons();
+console.log("列ボタンの初期化が完了しました");
 
 // Nextボタンのイベントリスナーを追加
 document.getElementById('next-button').addEventListener('click', () => {
@@ -567,4 +582,82 @@ document.getElementById('next-button').addEventListener('click', () => {
     // モード選択画面を表示
     showModeSelection();
 });
+
+// マッチング画面を表示する関数
+function showMatchScreen(data) {
+    // 既存のマッチング画面があれば削除
+    const existingOverlay = document.querySelector('.match-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+
+    // マッチング画面のHTMLを作成
+    const overlay = document.createElement('div');
+    overlay.className = 'match-overlay';
+    overlay.innerHTML = `
+        <div class="match-content">
+            <div class="player-info">
+                <div class="player-avatar">
+                    <img src="/images/avatar1.png" alt="Player 1 Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.onerror=null; this.innerHTML='${data.isFirstMove ? data.myUsername.charAt(0).toUpperCase() : data.opponentUsername.charAt(0).toUpperCase()}'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.style.fontSize='3rem'; this.style.color='#007bff';">
+                </div>
+                <div class="player-details">
+                    <div class="player-name">${data.isFirstMove ? data.myUsername : data.opponentUsername}</div>
+                    <div class="player-rating">Rating: ${data.isFirstMove ? data.rating : data.opponentRating}</div>
+                </div>
+            </div>
+            <div class="vs-text">VS</div>
+            <div class="player-info">
+                <div class="player-avatar">
+                    <img src="/images/avatar1.png" alt="Player 2 Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.onerror=null; this.innerHTML='${data.isFirstMove ? data.opponentUsername.charAt(0).toUpperCase() : data.myUsername.charAt(0).toUpperCase()}'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.style.fontSize='3rem'; this.style.color='#dc3545';">
+                </div>
+                <div class="player-details">
+                    <div class="player-name">${data.isFirstMove ? data.opponentUsername : data.myUsername}</div>
+                    <div class="player-rating">Rating: ${data.isFirstMove ? data.opponentRating : data.rating}</div>
+                </div>
+            </div>
+            <div class="match-status">マッチしました！</div>
+        </div>
+    `;
+
+    // マッチング画面を表示
+    document.body.appendChild(overlay);
+
+    // 3秒後にマッチング画面を非表示にしてゲームを開始
+    setTimeout(() => {
+        overlay.remove();
+        // ゲーム開始の処理
+        resetBoard();
+        gameState.resetCurrentPlayer();
+        gameState.resetModePlayInOnline();
+        gameState.setCurrentRoomId(data.roomId);
+        gameState.setMyTurn(data.isFirstMove);
+        updateTurn(gameState.currentPlayer);
+
+        // 既存のレーティング表示を更新
+        const ratingDisplay = document.getElementById("rating-display");
+        const player1Name = document.getElementById("player1-name");
+        const player1Rating = document.getElementById("player1-rating");
+        const player2Name = document.getElementById("player2-name");
+        const player2Rating = document.getElementById("player2-rating");
+
+        if (data.isFirstMove) {
+            player1Name.textContent = `あなた (${data.myUsername})`;
+            player1Rating.textContent = `Rating: ${data.rating}`;
+            player2Name.textContent = `対戦相手 (${data.opponentUsername})`;
+            player2Rating.textContent = `Rating: ${data.opponentRating}`;
+        } else {
+            player1Name.textContent = `対戦相手 (${data.opponentUsername})`;
+            player1Rating.textContent = `Rating: ${data.opponentRating}`;
+            player2Name.textContent = `あなた (${data.myUsername})`;
+            player2Rating.textContent = `Rating: ${data.rating}`;
+        }
+        ratingDisplay.style.display = "flex";
+        
+        const gameStatus = document.getElementById("gameStatus");
+        gameStatus.textContent = `Game start!${data.isFirstMove ? '（First Move）' : '（Second Move）'}`;
+        gameStatus.style.display = "block";
+        
+        document.getElementById("turnIndicator").style.display = "block";
+    }, 3000);
+}
     
