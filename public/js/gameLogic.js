@@ -16,7 +16,7 @@ export function initializeWebSocket(token = null) {
     
     if (socket) {
         console.log('既存のWebSocket接続を閉じます');
-        socket.close();
+        socket.close(1000, "正常終了");
     }
     
     console.log('新しいWebSocket接続を作成します:', wsUrl);
@@ -26,8 +26,14 @@ export function initializeWebSocket(token = null) {
         console.log('WebSocket接続が確立されました。状態:', socket.readyState);
     };
     
-    socket.onclose = () => {
-        console.log('WebSocket接続が切断されました');
+    socket.onclose = (event) => {
+        console.log('WebSocket接続が切断されました:', event.code, event.reason);
+        if (event.code === 1006) {
+            console.log('予期せぬ切断が発生しました。再接続を試みます...');
+            setTimeout(() => {
+                initializeWebSocket(token);
+            }, 3000);
+        }
         gameResult.style.display = "none";
     };
     
@@ -540,7 +546,17 @@ function joinRoom(roomId) {
 }
 
 function sendMove(move) {
-    socket.send(JSON.stringify({ type: "move", move }));
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket接続が確立されていません');
+        return;
+    }
+    try {
+        const message = JSON.stringify({ type: "move", move });
+        console.log("送信するメッセージ:", message);
+        socket.send(message);
+    } catch (error) {
+        console.error('メッセージ送信エラー:', error);
+    }
 }
 
 // 各列のボタンにクリックイベントを追加する関数
