@@ -243,12 +243,6 @@ export function dropPiece(col, isOpponentMove = false) {
                 console.log("駒が作成されました:", piece);
                 piece.className = 'piece';
                 piece.style.backgroundColor = gameState.currentPlayer;
-                piece.style.position = 'absolute';
-                piece.style.left = '0';
-                piece.style.width = '100%';
-                piece.style.height = '100%';
-                piece.style.borderRadius = '50%';
-                piece.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
                 
                 // セルに駒を追加
                 cell.appendChild(piece);
