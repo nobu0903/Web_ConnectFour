@@ -126,28 +126,15 @@ process.on('SIGINT', async () => {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/public'), {
-    maxAge: '1d',
+    maxAge: '1h',  // キャッシュ時間を1時間に短縮
     etag: true,
     lastModified: true,
     setHeaders: (res, path) => {
-        const cacheControl = 'public, max-age=86400, immutable';
-        if (path.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-            res.setHeader('Cache-Control', cacheControl);
-            res.setHeader('X-Content-Type-Options', 'nosniff');
-        } else if (path.endsWith('.css')) {
+        if (path.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
-            res.setHeader('Cache-Control', cacheControl);
-            res.setHeader('X-Content-Type-Options', 'nosniff');
-        } else if (path.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
-            res.setHeader('Cache-Control', cacheControl);
-            res.setHeader('X-Content-Type-Options', 'nosniff');
+            res.setHeader('Cache-Control', 'public, max-age=3600'); // 1時間のキャッシュ
         }
-    },
-    immutable: true,
-    cacheControl: true,
-    dotfiles: 'ignore',
-    index: false
+    }
 }));
 
 let waitingPlayer = null;
