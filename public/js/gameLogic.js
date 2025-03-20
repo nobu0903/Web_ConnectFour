@@ -44,6 +44,9 @@ export function initializeWebSocket(token = null) {
             if (data.type === "gameStart") {
                 console.log("ゲーム開始メッセージを受信:", data);
                 
+                // マッチング画面を表示
+                showMatchScreen(data);
+                
                 // 最初にゲームの状態をリセット
                 resetBoard();
                 gameState.resetCurrentPlayer();
@@ -568,3 +571,80 @@ document.getElementById('next-button').addEventListener('click', () => {
     showModeSelection();
 });
     
+// マッチング画面を表示する関数
+export function showMatchScreen(data) {
+    // 既存のマッチング画面があれば削除
+    const existingOverlay = document.querySelector('.match-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+
+    // マッチング画面のHTMLを作成
+    const overlay = document.createElement('div');
+    overlay.className = 'match-overlay';
+    overlay.innerHTML = `
+        <div class="match-content">
+            <div class="player-info">
+                <div class="player-avatar">
+                    <img src="/images/avatar1.png" alt="Player 1 Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                </div>
+                <div class="player-details">
+                    <div class="player-name">${data.isFirstMove ? data.myUsername : data.opponentUsername}</div>
+                    <div class="player-rating">Rating: ${data.isFirstMove ? data.rating : data.opponentRating}</div>
+                </div>
+            </div>
+            <div class="vs-text">VS</div>
+            <div class="player-info">
+                <div class="player-avatar">
+                    <img src="/images/avatar2.png" alt="Player 2 Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                </div>
+                <div class="player-details">
+                    <div class="player-name">${data.isFirstMove ? data.opponentUsername : data.myUsername}</div>
+                    <div class="player-rating">Rating: ${data.isFirstMove ? data.opponentRating : data.rating}</div>
+                </div>
+            </div>
+            <div class="match-status">マッチしました！</div>
+        </div>
+    `;
+
+    // マッチング画面を表示
+    document.body.appendChild(overlay);
+
+    // 3秒後にマッチング画面を非表示にしてゲームを開始
+    setTimeout(() => {
+        overlay.remove();
+        // ゲーム開始の処理
+        resetBoard();
+        gameState.resetCurrentPlayer();
+        gameState.resetModePlayInOnline();
+        gameState.setCurrentRoomId(data.roomId);
+        gameState.setMyTurn(data.isFirstMove);
+        updateTurn(gameState.currentPlayer);
+
+        // 既存のレーティング表示を更新
+        const ratingDisplay = document.getElementById("rating-display");
+        const player1Name = document.getElementById("player1-name");
+        const player1Rating = document.getElementById("player1-rating");
+        const player2Name = document.getElementById("player2-name");
+        const player2Rating = document.getElementById("player2-rating");
+
+        if (data.isFirstMove) {
+            player1Name.textContent = `あなた (${data.myUsername})`;
+            player1Rating.textContent = `Rating: ${data.rating}`;
+            player2Name.textContent = `対戦相手 (${data.opponentUsername})`;
+            player2Rating.textContent = `Rating: ${data.opponentRating}`;
+        } else {
+            player1Name.textContent = `対戦相手 (${data.opponentUsername})`;
+            player1Rating.textContent = `Rating: ${data.opponentRating}`;
+            player2Name.textContent = `あなた (${data.myUsername})`;
+            player2Rating.textContent = `Rating: ${data.rating}`;
+        }
+        ratingDisplay.style.display = "flex";
+        
+        const gameStatus = document.getElementById("gameStatus");
+        gameStatus.textContent = `Game start!${data.isFirstMove ? '（First Move）' : '（Second Move）'}`;
+        gameStatus.style.display = "block";
+        
+        document.getElementById("turnIndicator").style.display = "block";
+    }, 3000);
+}
