@@ -579,14 +579,34 @@ export function showMatchScreen(data) {
         existingOverlay.remove();
     }
 
-    // マッチング画面のHTMLを作成
+    // アバター画像のパスを決定する関数
+    const getAvatarPath = (rating) => {
+        if (rating >= 2000) {
+            return '/images/avatar1.png';
+        }else if (rating >= 1800 && rating < 2000) {
+            return '/images/avatar2.jpg';
+        }else if (rating >= 1700 && rating < 1800) {
+            return '/images/avatar3';
+        }else if (rating >= 1600 && rating < 1700) {
+            return '/images/avatar4';
+        }else if (rating >= 1550 && rating < 1600) {
+            return '/images/avatar5';
+        }else if (rating >= 1510 && rating < 1550) {
+            return '/images/avatar6.jpg';
+        }else {
+            return "/images/avatar7.jpg"
+        }
+    };
+
     const overlay = document.createElement('div');
     overlay.className = 'match-overlay';
     overlay.innerHTML = `
         <div class="match-content">
             <div class="player-info">
                 <div class="player-avatar">
-                    <img src="/images/avatar1.png" alt="Player 1 Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    <img src="${getAvatarPath(data.isFirstMove ? data.rating : data.opponentRating)}" 
+                         alt="Player 1 Avatar" 
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                 </div>
                 <div class="player-details">
                     <div class="player-name">${data.isFirstMove ? data.myUsername : data.opponentUsername}</div>
@@ -596,7 +616,9 @@ export function showMatchScreen(data) {
             <div class="vs-text">VS</div>
             <div class="player-info">
                 <div class="player-avatar">
-                    <img src="/images/avatar2.png" alt="Player 2 Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    <img src="${getAvatarPath(data.isFirstMove ? data.opponentRating : data.rating)}" 
+                         alt="Player 2 Avatar" 
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                 </div>
                 <div class="player-details">
                     <div class="player-name">${data.isFirstMove ? data.opponentUsername : data.myUsername}</div>
